@@ -1,0 +1,114 @@
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — primary data store
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: fiftyone_insight_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-fiftyone_insight}
+      POSTGRES_USER:     ${POSTGRES_USER:-fiftyone}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fiftyone_secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fiftyone} -d ${POSTGRES_DB:-fiftyone_insight}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+ 
+  # ---------- Self-hosted meta-search engine ----------
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    ports:
+      - "8888:8080"
+    volumes:
+      - ./config/searxng:/etc/searxng:ro
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:8888/"
+      SEARXNG_SECRET: "${SEARXNG_SECRET:-changeme_please_generate_a_random_secret}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # ---------- Cache & job-queue backend ----------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # # ---------- FastAPI application ----------
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: api
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     ZAI_API_KEY: "${ZAI_API_KEY}"
+  #     ZAI_API_BASE: "${ZAI_API_BASE:-https://open.bigmodel.cn/api/paas/v4/chat/completions}"
+  #     SEARXNG_URL: "http://searxng:8080"
+  #     REDIS_URL: "redis://redis:6379/0"
+  #     PIPELINE_TIMEOUT: "${PIPELINE_TIMEOUT:-30}"
+  #     LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+  #   depends_on:
+  #     searxng:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./output:/app/output
+  #   restart: unless-stopped
+
+  # # ---------- Background pipeline worker ----------
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: worker
+  #   command: ["python", "-m", "src.api.cli", "batch"]
+  #   environment:
+  #     ZAI_API_KEY: "${ZAI_API_KEY}"
+  #     ZAI_API_BASE: "${ZAI_API_BASE:-https://open.bigmodel.cn/api/paas/v4/chat/completions}"
+  #     SEARXNG_URL: "http://searxng:8080"
+  #     REDIS_URL: "redis://redis:6379/0"
+  #     PIPELINE_TIMEOUT: "${PIPELINE_TIMEOUT:-30}"
+  #     LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+  #   depends_on:
+  #     searxng:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./output:/app/output
+  #   restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
