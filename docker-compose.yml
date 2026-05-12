@@ -56,6 +56,33 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # ---------- Pipeline runner ----------
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pipeline
+    environment:
+      ZAI_API_KEY: "${ZAI_API_KEY}"
+      ZAI_API_BASE: "${ZAI_API_BASE:-https://open.bigmodel.cn/api/paas/v4/chat/completions}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      SEARXNG_URL: "http://searxng:8080"
+      REDIS_URL: "redis://redis:6379/0"
+      DATABASE_URL: "postgresql://fiftyone:${POSTGRES_PASSWORD:-fiftyone_secret}@postgres:5432/${POSTGRES_DB:-fiftyone_insight}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-openai}"
+    depends_on:
+      searxng:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./output:/app/output
+    restart: "no"
+
   # # ---------- FastAPI application ----------
   # api:
   #   build:

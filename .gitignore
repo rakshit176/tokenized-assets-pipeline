@@ -14,6 +14,7 @@ build/
 
 # Output
 output/
+!output/samples/
 
 # IDE
 .vscode/

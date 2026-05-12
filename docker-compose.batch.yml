@@ -1,0 +1,34 @@
+services:
+  # Minimal services for batch processing
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng_batch
+    ports:
+      - "8888:8080"
+    volumes:
+      - ./config/searxng:/etc/searxng:ro
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:8888/"
+      SEARXNG_SECRET: "${SEARXNG_SECRET:-changeme_please_generate_a_random_secret}"
+    restart: unless-stopped
+
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pipeline_batch
+    environment:
+      ZAI_API_KEY: "${ZAI_API_KEY}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      SEARXNG_URL: "http://searxng:8080"
+      LLM_PROVIDER: "${LLM_PROVIDER:-openai}"
+    depends_on:
+      searxng:
+        condition: service_started
+    volumes:
+      - ./output:/app/output
+      - ./companies.csv:/app/companies.csv:ro
+    command: ["python", "scripts/batch_run.py", "companies.csv"]
+    restart: on-success

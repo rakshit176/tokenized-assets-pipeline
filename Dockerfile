@@ -1,17 +1,35 @@
 FROM python:3.12-slim
 
+LABEL maintainer="rakshit176" \
+      description="Tokenized Assets Data Extraction Pipeline"
+
 WORKDIR /app
 
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends \
+    curl \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements first for better caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src/ src/
-COPY config/ config/
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt \
+    && rm -rf ~/.cache/pip
 
-EXPOSE 8000
+# Install Playwright browsers
+RUN playwright install chromium --with-deps
 
-CMD ["uvicorn", "src.api.server:app", "--host", "0.0.0.0", "--port", "8000"]
+# Copy application code
+COPY . .
+
+# Create output directory
+RUN mkdir -p /app/output
+
+# Default to batch help
+ENTRYPOINT ["python", "step_run.py"]
+CMD ["--help"]
