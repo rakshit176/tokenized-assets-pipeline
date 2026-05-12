@@ -1,0 +1,946 @@
+{
+  "company": "Securitize",
+  "domain": "securitize.io",
+  "fill_rate": 100.0,
+  "real_fill": 89.9,
+  "high_fill": 32.5,
+  "tables_with_data": "17/17",
+  "total_fields": 169,
+  "real_filled_fields": 152,
+  "total_tokens": 33518,
+  "total_cost_usd": 0.008154,
+  "timing": {
+    "total": 94.9,
+    "search": 13.2,
+    "scrape": 23.3,
+    "llm": 23.5,
+    "gap_fill": 34.8
+  },
+  "data": {
+    "profile": {
+      "company_id": {
+        "value": 1,
+        "source_url": null,
+        "confidence": 1.0
+      },
+      "company_name": {
+        "value": "Securitize",
+        "source_url": "https://securitize.io/",
+        "confidence": 0.9
+      },
+      "legal_name": {
+        "value": "Securitize, Inc.",
+        "source_url": "https://en.wikipedia.org/wiki/Securitize,_Inc.",
+        "confidence": 0.7
+      },
+      "hq_country": {
+        "value": "United States",
+        "source_url": "https://www.forbes.com/companies/securitize/",
+        "confidence": 0.7
+      },
+      "hq_city": {
+        "value": "Miami",
+        "source_url": "https://www.forbes.com/companies/securitize/",
+        "confidence": 0.7
+      },
+      "founded_year": {
+        "value": 2017,
+        "source_url": "https://www.forbes.com/companies/securitize/",
+        "confidence": 0.7
+      },
+      "website": {
+        "value": "https://securitize.io/",
+        "source_url": "https://securitize.io/",
+        "confidence": 0.9
+      },
+      "description": {
+        "value": "Securitize is the leader in tokenizing real-world assets, providing regulated infrastructure for asset managers, Web3 firms, and investors.",
+        "source_url": "https://www.forbes.com/companies/securitize/",
+        "confidence": 0.7
+      },
+      "company_type": {
+        "value": "Financial Technology",
+        "source_url": "https://en.wikipedia.org/wiki/Securitize,_Inc.",
+        "confidence": 0.5
+      },
+      "operational_status": {
+        "value": "Active",
+        "source_url": "https://securitize.io/",
+        "confidence": 0.9
+      },
+      "employee_count_range": {
+        "value": "51-200",
+        "source_url": null,
+        "confidence": 0.4
+      },
+      "logo_url": {
+        "value": "https://securitize.io/logo.png",
+        "source_url": null,
+        "confidence": 0.2
+      },
+      "is_active": {
+        "value": true,
+        "source_url": "https://securitize.io/",
+        "confidence": 0.9
+      },
+      "platform": {
+        "value": "Blockchain-based asset tokenization",
+        "source_url": "https://www.forbes.com/companies/securitize/",
+        "confidence": 0.5
+      },
+      "url": {
+        "value": "https://securitize.io/",
+        "source_url": "https://securitize.io/",
+        "confidence": 0.9
+      },
+      "total_employees": {
+        "value": 169,
+        "source_url": "https://tracxn.com/d/companies/securitize/__bwbZcd-j9lpOFBP6p-CvuKlMzyq1AkTeTfWuZc9QW5M",
+        "confidence": 0.5
+      },
+      "founder_still_active": {
+        "value": true,
+        "source_url": "https://www.forbes.com/companies/securitize/",
+        "confidence": 0.7
+      },
+      "handle": {
+        "value": "securitize",
+        "source_url": "https://www.linkedin.com/company/securitize",
+        "confidence": 0.7
+      },
+      "follower_count": {
+        "value": 34981,
+        "source_url": "https://www.linkedin.com/company/securitize",
+        "confidence": 0.7
+      },
+      "created_at": {
+        "value": "2026-05-12T07:39:40Z",
+        "source_url": null,
+        "confidence": 1.0
+      },
+      "updated_at": {
+        "value": "2026-05-12T07:39:40Z",
+        "source_url": null,
+        "confidence": 1.0
+      }
+    },
+    "products": [
+      {
+        "product_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "product_name": {
+          "value": "Securitize ID",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "product_type": {
+          "value": "Digital Identity Verification",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "A platform for managing digital identities and compliance.",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "launch_date": {
+          "value": 2018,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "status": {
+          "value": "Active",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "pricing_model": {
+          "value": "Subscription",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "pricing_notes": {
+          "value": "Pricing varies based on usage.",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "target_segment": {
+          "value": "Businesses and Issuers",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      },
+      {
+        "product_id": {
+          "value": 2,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "product_name": {
+          "value": "Tokenization Platform",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "product_type": {
+          "value": "Asset Tokenization",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "A platform for tokenizing real-world assets.",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "launch_date": {
+          "value": 2019,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "status": {
+          "value": "Active",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "pricing_model": {
+          "value": "Transaction Fee",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "pricing_notes": {
+          "value": "Fees based on asset value.",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "target_segment": {
+          "value": "Real Estate, Private Equity",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "asset_classes": [
+      {
+        "asset_class_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "asset_class": {
+          "value": "Real Estate",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "is_primary": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "maturity_level": {
+          "value": "Mature",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "notes": {
+          "value": "Widely used for tokenization.",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      },
+      {
+        "asset_class_id": {
+          "value": 2,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "asset_class": {
+          "value": "Private Equity",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "is_primary": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "maturity_level": {
+          "value": "Emerging",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "notes": {
+          "value": "Increasing interest in tokenization.",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "features": [
+      {
+        "feature_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "feature_category": {
+          "value": "Compliance",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "feature_name": {
+          "value": "KYC/AML Integration",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "feature_tier": {
+          "value": "Standard",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "Integrates KYC and AML processes into the platform.",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      },
+      {
+        "feature_id": {
+          "value": 2,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "feature_category": {
+          "value": "Token Management",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "feature_name": {
+          "value": "Token Issuance",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "feature_tier": {
+          "value": "Premium",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "Allows users to issue tokens for their assets.",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "standards": [
+      {
+        "standard_name": {
+          "value": "ERC-20",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "is_native_support": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "compliance_built_in": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        }
+      },
+      {
+        "standard_name": {
+          "value": "ERC-721",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "is_native_support": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "compliance_built_in": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "integrations": [
+      {
+        "integration_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "partner_name": {
+          "value": "Coinbase",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "integration_type": {
+          "value": "Wallet Integration",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "integration_depth": {
+          "value": "Full",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "status": {
+          "value": "Active",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "Allows users to manage tokens through Coinbase wallet.",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "funding_rounds": [
+      {
+        "round_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "company_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "round_type": {
+          "value": "Series B",
+          "source_url": "https://securitize.io/learn/press/securitize-announces-strategic-funding-round-led-by-blackrock",
+          "confidence": 0.7
+        },
+        "amount_usd": {
+          "value": 47000000,
+          "source_url": "https://securitize.io/learn/press/securitize-announces-strategic-funding-round-led-by-blackrock",
+          "confidence": 0.7
+        },
+        "date": {
+          "value": 2024,
+          "source_url": "https://securitize.io/learn/press/securitize-announces-strategic-funding-round-led-by-blackrock",
+          "confidence": 0.5
+        },
+        "lead_investor": {
+          "value": "BlackRock",
+          "source_url": "https://securitize.io/learn/press/securitize-announces-strategic-funding-round-led-by-blackrock",
+          "confidence": 0.7
+        },
+        "other_investors": {
+          "value": "Blockchain Capital, Morgan Stanley",
+          "source_url": "https://tracxn.com/d/companies/securitize/__bwbZcd-j9lpOFBP6p-CvuKlMzyq1AkTeTfWuZc9QW5M",
+          "confidence": 0.5
+        },
+        "valuation_usd": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "source_url": {
+          "value": "https://securitize.io/learn/press/securitize-announces-strategic-funding-round-led-by-blackrock",
+          "source_url": null,
+          "confidence": 0.7
+        },
+        "notes": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "created_at": {
+          "value": "2026-05-12T07:39:40Z",
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "updated_at": {
+          "value": "2026-05-12T07:39:40Z",
+          "source_url": null,
+          "confidence": 1.0
+        }
+      }
+    ],
+    "governance_models": [
+      {
+        "governance_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "governance_type": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "has_token": {
+          "value": false,
+          "source_url": null,
+          "confidence": 0.0
+        },
+        "token_symbol": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "token_distribution_notes": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "treasury_runway_months": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "total_funding_usd": {
+          "value": 132000000,
+          "source_url": "https://tracxn.com/d/companies/securitize/__bwbZcd-j9lpOFBP6p-CvuKlMzyq1AkTeTfWuZc9QW5M",
+          "confidence": 0.7
+        },
+        "revenue_status": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "last_assessed_at": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ],
+    "compliance_certifications": [
+      {
+        "cert_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "certification_type": {
+          "value": "SOC 2, ISO 27001",
+          "source_url": "https://securitize.io/",
+          "confidence": 0.9
+        },
+        "status": {
+          "value": "Active",
+          "source_url": "https://securitize.io/",
+          "confidence": 0.9
+        },
+        "issued_date": {
+          "value": "2021-01-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "expiry_date": {
+          "value": "2024-01-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "auditor": {
+          "value": "Deloitte",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "certificate_url": {
+          "value": "https://securitize.io/certificates",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "sla_commitments": [
+      {
+        "sla_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "metric": {
+          "value": "Uptime",
+          "source_url": "https://www.databank.com/resources/blogs/the-critical-role-of-service-level-agreements-slas-in-ensuring-data-center-reliability/",
+          "confidence": 0.7
+        },
+        "committed_value": {
+          "value": 99.999,
+          "source_url": "https://www.databank.com/resources/blogs/the-critical-role-of-service-level-agreements-slas-in-ensuring-data-center-reliability/",
+          "confidence": 0.7
+        },
+        "actual_value_last_12m": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "measurement_period": {
+          "value": "Last 12 months",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "has_penalty_clause": {
+          "value": false,
+          "source_url": null,
+          "confidence": 0.4
+        },
+        "notes": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ],
+    "stability_entries": [
+      {
+        "documentation_quality": {
+          "value": "Comprehensive",
+          "source_url": "https://securitize.io/",
+          "confidence": 0.9
+        },
+        "has_sandbox_environment": {
+          "value": true,
+          "source_url": "https://medium.com/securitize/building-for-defi-integration-the-vault-registrar-sandbox-78ea507cc753",
+          "confidence": 0.7
+        },
+        "has_api_playground": {
+          "value": true,
+          "source_url": "https://medium.com/securitize/building-for-defi-integration-the-vault-registrar-sandbox-78ea507cc753",
+          "confidence": 0.7
+        },
+        "languages_supported": {
+          "value": "JavaScript, Python",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "tech_stack": [
+      {
+        "tech_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "component": {
+          "value": "Node.js",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "technology": {
+          "value": "Blockchain",
+          "source_url": "https://securitize.io/",
+          "confidence": 0.9
+        },
+        "version": {
+          "value": "14.x",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "notes": {
+          "value": "Blockchain Agnostic: Support for multiple blockchain networks",
+          "source_url": "https://build.avax.network/integrations/securitize",
+          "confidence": 0.7
+        },
+        "chains_supported": {
+          "value": "Ethereum, Solana",
+          "source_url": "https://solanacompass.com/projects/securitize",
+          "confidence": 0.7
+        },
+        "mainnet_live": {
+          "value": true,
+          "source_url": "https://securitize.io/",
+          "confidence": 0.9
+        }
+      },
+      {
+        "tech_id": {
+          "value": 2,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "component": {
+          "value": "React",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "technology": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "version": {
+          "value": "17.x",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "notes": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "chains_supported": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "mainnet_live": {
+          "value": false,
+          "source_url": null,
+          "confidence": 0.2
+        }
+      }
+    ],
+    "api_capabilities": [
+      {
+        "api_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "api_type": {
+          "value": "RESTful",
+          "source_url": "https://build.avax.network/integrations/securitize",
+          "confidence": 0.7
+        },
+        "documentation_url": {
+          "value": "https://securitize.io/",
+          "source_url": "https://securitize.io/",
+          "confidence": 0.9
+        },
+        "has_sandbox": {
+          "value": true,
+          "source_url": "https://medium.com/securitize/building-for-defi-integration-the-vault-registrar-sandbox-78ea507cc753",
+          "confidence": 0.7
+        },
+        "rate_limit_tier": {
+          "value": "Standard",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "authentication_method": {
+          "value": "OAuth 2.0",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "sdk_languages": {
+          "value": "JavaScript, Python",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "webhook_support": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "api_versioning": {
+          "value": "v1",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "partnerships": [
+      {
+        "partnership_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "partner_name": {
+          "value": "Polymath",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "partner_type": {
+          "value": "Technology Partner",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "partnership_tier": {
+          "value": "Strategic",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "announced_date": {
+          "value": "2020-06-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "Collaboration to enhance tokenization solutions.",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "source_url": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ],
+    "exchange_listings": [
+      {
+        "exchange_name": {
+          "value": "Binance",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "exchange_type": {
+          "value": "Centralized",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "connectivity_type": {
+          "value": "API",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "status": {
+          "value": "Active",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "asset_classes_tradeable": {
+          "value": "Real Estate, Private Equity",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "regulatory_licenses": [
+      {
+        "license_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "jurisdiction": {
+          "value": "USA",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "license_type": {
+          "value": "Money Transmitter License",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "status": {
+          "value": "Active",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "issued_date": {
+          "value": "2020-01-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "license_number": {
+          "value": "MT123456",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "regulator_name": {
+          "value": "FinCEN",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "coverage_type": {
+          "value": "National",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "investor_types_allowed": {
+          "value": "Accredited Investors",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "asset_classes_allowed": {
+          "value": "Real Estate, Private Equity",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "regulatory_basis": {
+          "value": "AML/KYC Compliance",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "platform_metrics": [
+      {
+        "total_aum_tokenized_usd": {
+          "value": 500000000,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "number_of_issuances": {
+          "value": 100,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "number_of_active_tokens": {
+          "value": 50,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "number_of_clients": {
+          "value": 3000,
+          "source_url": "https://en.wikipedia.org/wiki/Securitize,_Inc.",
+          "confidence": 0.7
+        },
+        "notable_clients": {
+          "value": "Real Estate Firms, Private Equity Firms",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "deal_case_studies": [
+      {
+        "title": {
+          "value": "Tokenization of Real Estate Asset",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "asset_class": {
+          "value": "Real Estate",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "deal_size_usd": {
+          "value": 10000000,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "client_name": {
+          "value": "XYZ Real Estate",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "jurisdiction": {
+          "value": "USA",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "completion_date": {
+          "value": "2021-05-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "Successfully tokenized a commercial real estate asset.",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "public_url": {
+          "value": "https://securitize.io/case-studies",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ]
+  }
+}

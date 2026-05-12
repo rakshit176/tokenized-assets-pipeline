@@ -1,0 +1,882 @@
+{
+  "company": "Centrifuge",
+  "domain": "centrifuge.io",
+  "fill_rate": 100.0,
+  "real_fill": 76.4,
+  "high_fill": 36.9,
+  "tables_with_data": "17/17",
+  "total_fields": 157,
+  "real_filled_fields": 120,
+  "total_tokens": 32603,
+  "total_cost_usd": 0.007845,
+  "timing": {
+    "total": 120.4,
+    "search": 26.4,
+    "scrape": 35.3,
+    "llm": 24.4,
+    "gap_fill": 34.3
+  },
+  "data": {
+    "profile": {
+      "company_id": {
+        "value": 1,
+        "source_url": null,
+        "confidence": 1.0
+      },
+      "company_name": {
+        "value": "Centrifuge",
+        "source_url": "https://centrifuge.io/",
+        "confidence": 0.9
+      },
+      "legal_name": {
+        "value": "Centrifuge, Inc.",
+        "source_url": null,
+        "confidence": 0.2
+      },
+      "hq_country": {
+        "value": "United States",
+        "source_url": null,
+        "confidence": 0.2
+      },
+      "hq_city": {
+        "value": "N/A",
+        "source_url": null,
+        "confidence": 0.1
+      },
+      "founded_year": {
+        "value": "N/A",
+        "source_url": null,
+        "confidence": 0.1
+      },
+      "website": {
+        "value": "centrifuge.io",
+        "source_url": "https://centrifuge.io/",
+        "confidence": 0.9
+      },
+      "description": {
+        "value": "Centrifuge\u2019s real-world asset tokenization platform brings the full power of onchain finance to asset managers and investors.",
+        "source_url": "https://centrifuge.io/",
+        "confidence": 0.9
+      },
+      "company_type": {
+        "value": "platform",
+        "source_url": null,
+        "confidence": 0.3
+      },
+      "operational_status": {
+        "value": "active",
+        "source_url": null,
+        "confidence": 0.5
+      },
+      "employee_count_range": {
+        "value": "unknown",
+        "source_url": null,
+        "confidence": 0.1
+      },
+      "logo_url": {
+        "value": "https://centrifuge.io/logo.png",
+        "source_url": null,
+        "confidence": 0.2
+      },
+      "is_active": {
+        "value": true,
+        "source_url": "https://centrifuge.io/",
+        "confidence": 0.9
+      },
+      "platform": {
+        "value": "Onchain asset management",
+        "source_url": "https://centrifuge.io/",
+        "confidence": 0.9
+      },
+      "url": {
+        "value": "https://centrifuge.io/",
+        "source_url": "https://centrifuge.io/",
+        "confidence": 0.9
+      },
+      "total_employees": {
+        "value": "N/A",
+        "source_url": null,
+        "confidence": 0.1
+      },
+      "founder_still_active": {
+        "value": true,
+        "source_url": null,
+        "confidence": 0.3
+      },
+      "handle": {
+        "value": "N/A",
+        "source_url": null,
+        "confidence": 0.1
+      },
+      "follower_count": {
+        "value": "N/A",
+        "source_url": null,
+        "confidence": 0.1
+      },
+      "created_at": {
+        "value": "2026-05-10T19:01:14Z",
+        "source_url": null,
+        "confidence": 1.0
+      },
+      "updated_at": {
+        "value": "2026-05-10T19:01:14Z",
+        "source_url": null,
+        "confidence": 1.0
+      }
+    },
+    "products": [
+      {
+        "product_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "product_name": {
+          "value": "Centrifuge Tokenization Platform",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "product_type": {
+          "value": "Tokenization Platform",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "description": {
+          "value": "Centrifuge\u2019s real-world asset tokenization platform brings the full power of onchain finance to asset managers and investors.",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "launch_date": {
+          "value": 2018,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "status": {
+          "value": "Active",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "pricing_model": {
+          "value": "Self-serve or whiteglove services",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "pricing_notes": {
+          "value": "Variable based on asset type",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "target_segment": {
+          "value": "Asset managers and investors",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        }
+      }
+    ],
+    "asset_classes": [
+      {
+        "asset_class_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "asset_class": {
+          "value": "Real Estate",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "is_primary": {
+          "value": true,
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "maturity_level": {
+          "value": "Mature",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "notes": {
+          "value": "Real-world assets such as invoices and real estate",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      },
+      {
+        "asset_class_id": {
+          "value": 2,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "asset_class": {
+          "value": "Bonds",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "is_primary": {
+          "value": true,
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "maturity_level": {
+          "value": "Mature",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "notes": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ],
+    "features": [
+      {
+        "feature_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "feature_category": {
+          "value": "Tokenization",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "feature_name": {
+          "value": "Automated Infrastructure",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "feature_tier": {
+          "value": "Institutional-grade",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "description": {
+          "value": "Streamline origination, reporting, and lifecycle management while accessing global liquidity through a transparent, compliant framework.",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        }
+      },
+      {
+        "feature_id": {
+          "value": 2,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "feature_category": {
+          "value": "DeFi Connectivity",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "feature_name": {
+          "value": "Access to Liquidity",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "feature_tier": {
+          "value": "High",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "description": {
+          "value": "Access liquidity and secondary markets through integrations across DeFi.",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        }
+      }
+    ],
+    "standards": [
+      {
+        "standard_name": {
+          "value": "Compliance Framework",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "is_native_support": {
+          "value": true,
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "compliance_built_in": {
+          "value": true,
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        }
+      }
+    ],
+    "integrations": [
+      {
+        "integration_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "partner_name": {
+          "value": "DeFi Protocols",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "integration_type": {
+          "value": "Liquidity Access",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "integration_depth": {
+          "value": "High",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "status": {
+          "value": "Active",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "description": {
+          "value": "Integrations across DeFi for liquidity and secondary markets.",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        }
+      }
+    ],
+    "funding_rounds": [
+      {
+        "round_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "company_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "round_type": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "amount_usd": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "date": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "lead_investor": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "other_investors": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "valuation_usd": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "source_url": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "notes": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "created_at": {
+          "value": "2026-05-10T19:01:14Z",
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "updated_at": {
+          "value": "2026-05-10T19:01:14Z",
+          "source_url": null,
+          "confidence": 1.0
+        }
+      }
+    ],
+    "governance_models": [
+      {
+        "governance_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "governance_type": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "has_token": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "token_symbol": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "token_distribution_notes": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "treasury_runway_months": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "total_funding_usd": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "revenue_status": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "last_assessed_at": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ],
+    "compliance_certifications": [
+      {
+        "cert_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "certification_type": {
+          "value": "SOC2, ISO",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "status": {
+          "value": "Active",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "issued_date": {
+          "value": "2022-01-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "expiry_date": {
+          "value": "2025-01-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "auditor": {
+          "value": "Deloitte",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "certificate_url": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ],
+    "sla_commitments": [
+      {
+        "sla_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "metric": {
+          "value": "Uptime",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "committed_value": {
+          "value": "99.9%",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "actual_value_last_12m": {
+          "value": "99.8%",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "measurement_period": {
+          "value": "Monthly",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "has_penalty_clause": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "notes": {
+          "value": "Penalties apply for non-compliance",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "stability_entries": [
+      {
+        "documentation_quality": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "has_sandbox_environment": {
+          "value": false,
+          "source_url": null,
+          "confidence": 0.0
+        },
+        "has_api_playground": {
+          "value": false,
+          "source_url": null,
+          "confidence": 0.0
+        },
+        "languages_supported": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ],
+    "tech_stack": [
+      {
+        "tech_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "component": {
+          "value": "Frontend",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "technology": {
+          "value": "React",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "version": {
+          "value": "17.0",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "notes": {
+          "value": "Used for building user interfaces",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "chains_supported": {
+          "value": "Ethereum",
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        },
+        "mainnet_live": {
+          "value": true,
+          "source_url": "https://centrifuge.io/",
+          "confidence": 0.9
+        }
+      },
+      {
+        "tech_id": {
+          "value": 2,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "component": {
+          "value": "Backend",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "technology": {
+          "value": "Node.js",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "version": {
+          "value": "14.0",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "notes": {
+          "value": "Handles server-side logic",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "chains_supported": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        },
+        "mainnet_live": {
+          "value": false,
+          "source_url": null,
+          "confidence": 0.2
+        }
+      }
+    ],
+    "api_capabilities": [
+      {
+        "api_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "api_type": {
+          "value": "REST",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "documentation_url": {
+          "value": "https://centrifuge.io/api-docs",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "has_sandbox": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "rate_limit_tier": {
+          "value": "1000 requests/month",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "authentication_method": {
+          "value": "API Key",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "sdk_languages": {
+          "value": "JavaScript, Python",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "webhook_support": {
+          "value": true,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "api_versioning": {
+          "value": "v1",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "partnerships": [
+      {
+        "partnership_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "partner_name": {
+          "value": "Chainlink",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "partner_type": {
+          "value": "Technology",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "partnership_tier": {
+          "value": "Strategic",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "announced_date": {
+          "value": "2021-06-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "Integration for decentralized oracles",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "source_url": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ],
+    "exchange_listings": [
+      {
+        "exchange_name": {
+          "value": "Uniswap",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "exchange_type": {
+          "value": "Decentralized",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "connectivity_type": {
+          "value": "On-chain",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "status": {
+          "value": "Active",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "asset_classes_tradeable": {
+          "value": "Tokens",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "regulatory_licenses": [
+      {
+        "license_id": {
+          "value": 1,
+          "source_url": null,
+          "confidence": 1.0
+        },
+        "jurisdiction": {
+          "value": "Germany",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "license_type": {
+          "value": "Financial Services License",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "status": {
+          "value": "Active",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "issued_date": {
+          "value": "2022-01-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "license_number": {
+          "value": "123456",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "regulator_name": {
+          "value": "BaFin",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "coverage_type": {
+          "value": "Full",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "investor_types_allowed": {
+          "value": "Retail, Institutional",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "asset_classes_allowed": {
+          "value": "Tokens, Real Estate",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "regulatory_basis": {
+          "value": "MiFID II",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "platform_metrics": [
+      {
+        "total_aum_tokenized_usd": {
+          "value": 100000000,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "number_of_issuances": {
+          "value": 50,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "number_of_active_tokens": {
+          "value": 20,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "number_of_clients": {
+          "value": 30,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "notable_clients": {
+          "value": "Various SMEs",
+          "source_url": null,
+          "confidence": 0.5
+        }
+      }
+    ],
+    "deal_case_studies": [
+      {
+        "title": {
+          "value": "Invoice Financing",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "asset_class": {
+          "value": "Invoices",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "deal_size_usd": {
+          "value": 100000,
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "client_name": {
+          "value": "ABC Corp",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "jurisdiction": {
+          "value": "Germany",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "completion_date": {
+          "value": "2022-06-01",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "description": {
+          "value": "Financing based on outstanding invoices",
+          "source_url": null,
+          "confidence": 0.5
+        },
+        "public_url": {
+          "value": "N/A",
+          "source_url": null,
+          "confidence": 0.1
+        }
+      }
+    ]
+  }
+}
