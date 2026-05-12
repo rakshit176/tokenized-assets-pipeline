@@ -168,6 +168,20 @@ class PipelineRunner:
                 )
                 new_data = self._structure_output(extraction, company_name, domain)
                 self._merge_data(result.company_data, new_data)
+
+                # Validate extracted data
+                try:
+                    from .validation import validate_company_data
+                    validation_errors = validate_company_data(extraction)
+                    if validation_errors:
+                        logger.warning("Validation found %d issues across %d tables",
+                                    sum(len(e) for e in validation_errors.values()),
+                                    len(validation_errors))
+                        for table, errors in validation_errors.items():
+                            for err in errors[:3]:  # Log first 3 errors per table
+                                logger.warning("  %s: %s", table, err)
+                except Exception as ve:
+                    logger.debug("Validation skipped: %s", ve)
                 result.pass_count = pass_num
             except Exception as e:
                 result.errors.append(f"Pass {pass_num} LLM error: {str(e)[:200]}")
