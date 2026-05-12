@@ -169,6 +169,13 @@ class PipelineRunner:
                 new_data = self._structure_output(extraction, company_name, domain)
                 self._merge_data(result.company_data, new_data)
 
+                # Calibrate confidence scores
+                try:
+                    from .calibration import calibrate_company_data
+                    calibrate_company_data(extraction)
+                except Exception as ce:
+                    logger.debug("Calibration skipped: %s", ce)
+
                 # Validate extracted data
                 try:
                     from .validation import validate_company_data
