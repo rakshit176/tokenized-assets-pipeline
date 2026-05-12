@@ -49,6 +49,16 @@ async def run_company(domain: str, idx: int, total: int) -> dict[str, Any]:
 async def main():
     args = sys.argv[1:]
 
+    # Handle help
+    if not args or "--help" in args or "-h" in args:
+        print("Usage: python scripts/parallel_run.py [--max-concurrent N] domain1.com domain2.com ...")
+        print("\nExample:")
+        print("  python scripts/parallel_run.py securitize.io ondo.finance centrifuge.io")
+        print("  python scripts/parallel_run.py --max-concurrent 2 securitize.io ondo.finance")
+        print("\nOptions:")
+        print("  --max-concurrent N    Maximum number of concurrent jobs (default: 3)")
+        sys.exit(0 if not args else 0)
+
     # Parse options
     max_concurrent = 3
     domains = []
@@ -67,10 +77,8 @@ async def main():
             i += 1
 
     if not domains:
+        print("Error: No domains specified")
         print("Usage: python scripts/parallel_run.py [--max-concurrent N] domain1.com domain2.com ...")
-        print("\nExample:")
-        print("  python scripts/parallel_run.py securitize.io ondo.finance centrifuge.io")
-        print("  python scripts/parallel_run.py --max-concurrent 2 securitize.io ondo.finance")
         sys.exit(1)
 
     print(f"\n{'='*60}")
