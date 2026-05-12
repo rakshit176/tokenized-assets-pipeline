@@ -1,4 +1,9 @@
-"""OpenAI provider — GPT-4o, GPT-4o-mini, etc."""
+"""OpenAI provider — GPT-4o, GPT-4o-mini, etc.
+
+Uses OpenAI's JSON mode (response_format={"type": "json_object"}) which guarantees
+valid JSON responses. For even stronger schema compliance, set USE_STRUCTURED_OUTPUTS=true
+to enable Structured Outputs with json_schema validation.
+"""
 
 from __future__ import annotations
 
