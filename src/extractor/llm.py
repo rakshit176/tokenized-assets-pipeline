@@ -20,6 +20,7 @@ load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 from ..providers.factory import get_provider
 from ..providers.base import BaseLLMProvider, LLMCallResult
 from ..cache import get_cache
+from ..rate_limit import get_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -234,12 +235,13 @@ class LLMExtractor:
         )
 
     async def _call_llm(self, system: str, user: str, batch_name: str = "", _retries: int = 0) -> str:
-        """Call LLM provider with retry logic, caching, and cost logging."""
+        """Call LLM provider with retry logic, caching, rate limiting, and cost logging."""
         import hashlib
         import os
 
         sys_hash = hashlib.sha256(system.encode()).hexdigest()
         user_chars = len(user)
+        provider_name = type(self.provider).__name__.replace("Provider", "").lower()
 
         # Check cache first (disabled for gap/knowledge queries)
         use_cache = os.getenv("ENABLE_CACHE", "true").lower() == "true"
@@ -253,7 +255,7 @@ class LLMExtractor:
                 # Log as cached call
                 self.call_logs.append({
                     "batch_name": batch_name,
-                    "provider": type(self.provider).__name__.replace("Provider", "").lower(),
+                    "provider": provider_name,
                     "model": self.provider.config.model,
                     "prompt_tokens": 0,
                     "completion_tokens": 0,
@@ -269,13 +271,21 @@ class LLMExtractor:
                 return cached
             logger.info("Cache MISS for batch %s", batch_name)
 
+        # Acquire rate limit before making request
+        limiter = get_limiter()
+        estimated_tokens = user_chars // 4  # Rough estimate
+        await limiter.acquire(provider_name, estimated_tokens)
+
         try:
             result: LLMCallResult = await self.provider.complete_with_usage(system, user)
+
+            # Record actual token usage
+            limiter.record_usage(provider_name, result.total_tokens)
 
             # Log the call
             log_entry = {
                 "batch_name": batch_name,
-                "provider": type(self.provider).__name__.replace("Provider", "").lower(),
+                "provider": provider_name,
                 "model": self.provider.config.model,
                 "prompt_tokens": result.prompt_tokens,
                 "completion_tokens": result.completion_tokens,
@@ -305,7 +315,7 @@ class LLMExtractor:
             if not self.call_logs or self.call_logs[-1].get("batch_name") != batch_name or self.call_logs[-1].get("success"):
                 self.call_logs.append({
                     "batch_name": batch_name,
-                    "provider": type(self.provider).__name__.replace("Provider", "").lower(),
+                    "provider": provider_name,
                     "model": self.provider.config.model,
                     "prompt_tokens": 0,
                     "completion_tokens": 0,
@@ -319,11 +329,15 @@ class LLMExtractor:
                     "cached": False,
                 })
 
-            # Rate limit retry
+            # Rate limit retry with exponential backoff
             status = getattr(e, "status_code", None)
             is_rate_limit = status == 429 or "429" in str(e) or "rate" in str(e).lower()
             if is_rate_limit and _retries < 4:
-                wait_time = 3 * (_retries + 1)
+                # Record 429 for backoff
+                limiter.record_429(provider_name)
+
+                # Exponential backoff
+                wait_time = 3 * (2 ** _retries)
                 logger.warning("Rate limited, waiting %ds (retry %d/4)", wait_time, _retries + 1)
                 await asyncio.sleep(wait_time)
                 return await self._call_llm(system, user, batch_name, _retries=_retries + 1)
