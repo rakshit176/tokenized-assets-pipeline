@@ -18,7 +18,9 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel as PydanticModel, Field
 
 from ..orchestrator import PipelineRunner, PipelineResult, run_pipeline
@@ -30,6 +32,8 @@ app = FastAPI(
     description="Data Gathering System for Tokenized Assets Companies — 30-second pipeline",
     version="1.0.0",
 )
+
+templates = Jinja2Templates(directory="src/api/templates")
 
 # In-memory job store (use Redis in production)
 _jobs: dict[str, dict] = {}
@@ -74,6 +78,11 @@ class HealthResponse(PydanticModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.get("/health", response_model=HealthResponse)
 async def health():
