@@ -227,6 +227,7 @@ async def run_company(company_name: str, domain: str):
     from src.extractor.llm import LLMExtractor
     from src.orchestrator import PipelineRunner
     from src.schema.models import CompanyData, CitedValue
+    from src.cache import get_cache
 
     t0 = time.time()
     print(f"\n{'='*60}\n  {company_name} ({domain})\n{'='*60}", flush=True)
@@ -467,6 +468,16 @@ async def main():
 
         wb.save("output/comparison.xlsx")
         print(f"\n  Comparison: output/comparison.xlsx", flush=True)
+
+    # Cache stats
+    try:
+        cache = get_cache()
+        stats = cache.stats()
+        if stats["hits"] + stats["misses"] > 0:
+            print(f"\n  Cache: {stats['hits']} hits, {stats['misses']} misses, "
+                  f"{stats['hit_rate']} hit rate, {stats['cache_files']} files", flush=True)
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

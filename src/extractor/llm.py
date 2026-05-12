@@ -19,6 +19,7 @@ load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 from ..providers.factory import get_provider
 from ..providers.base import BaseLLMProvider, LLMCallResult
+from ..cache import get_cache
 
 logger = logging.getLogger(__name__)
 
@@ -233,17 +234,46 @@ class LLMExtractor:
         )
 
     async def _call_llm(self, system: str, user: str, batch_name: str = "", _retries: int = 0) -> str:
-        """Call LLM provider with retry logic and cost logging."""
+        """Call LLM provider with retry logic, caching, and cost logging."""
         import hashlib
+        import os
 
         sys_hash = hashlib.sha256(system.encode()).hexdigest()
         user_chars = len(user)
+
+        # Check cache first (disabled for gap/knowledge queries)
+        use_cache = os.getenv("ENABLE_CACHE", "true").lower() == "true"
+        is_cacheable = batch_name not in ("gap_extraction", "knowledge_gap")
+
+        if use_cache and is_cacheable and _retries == 0:
+            cache = get_cache()
+            cached = cache.get(user, self.provider.config.model, system)
+            if cached:
+                logger.info("Cache HIT for batch %s", batch_name)
+                # Log as cached call
+                self.call_logs.append({
+                    "batch_name": batch_name,
+                    "provider": type(self.provider).__name__.replace("Provider", "").lower(),
+                    "model": self.provider.config.model,
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                    "latency_ms": 1,
+                    "system_prompt_hash": sys_hash,
+                    "user_prompt_chars": user_chars,
+                    "response_chars": len(str(cached)),
+                    "success": True,
+                    "error_message": None,
+                    "cached": True,
+                })
+                return cached
+            logger.info("Cache MISS for batch %s", batch_name)
 
         try:
             result: LLMCallResult = await self.provider.complete_with_usage(system, user)
 
             # Log the call
-            self.call_logs.append({
+            log_entry = {
                 "batch_name": batch_name,
                 "provider": type(self.provider).__name__.replace("Provider", "").lower(),
                 "model": self.provider.config.model,
@@ -256,10 +286,17 @@ class LLMExtractor:
                 "response_chars": len(result.content),
                 "success": result.success,
                 "error_message": result.error,
-            })
+                "cached": False,
+            }
+            self.call_logs.append(log_entry)
 
             if not result.success:
                 raise RuntimeError(result.error or "Unknown error")
+
+            # Cache successful responses
+            if use_cache and is_cacheable and result.success:
+                cache = get_cache()
+                cache.set(user, self.provider.config.model, result.content, system)
 
             return result.content
 
@@ -279,6 +316,7 @@ class LLMExtractor:
                     "response_chars": 0,
                     "success": False,
                     "error_message": str(e)[:500],
+                    "cached": False,
                 })
 
             # Rate limit retry

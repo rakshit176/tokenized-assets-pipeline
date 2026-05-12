@@ -33,3 +33,6 @@ Thumbs.db
 postgres_data/
 redis_data/
 __init__.py
+
+# Cache
+cache/
