@@ -1,4 +1,4 @@
-.PHONY: help install dev test lint docker-build docker-up docker-down docker-logs db-shell db-reset clean run-sample run-batch
+.PHONY: help install dev test lint docker-build docker-up docker-down docker-logs db-shell db-reset clean run-sample run-batch run-parallel
 
 help:
 	@echo "Tokenized Assets Pipeline - Available commands:"
@@ -23,6 +23,7 @@ help:
 	@echo "Pipeline runs:"
 	@echo "  make run-sample    Run on 3 sample companies"
 	@echo "  make run-batch     Run batch from companies.csv"
+	@echo "  make run-parallel  Run multiple companies in parallel (concurrent)"
 	@echo "  make run COMPANY='Name domain.com'  Run specific company"
 	@echo ""
 	@echo "Cleanup:"
@@ -34,7 +35,7 @@ install:
 	pre-commit install || echo "pre-commit not available"
 
 dev:
-	python step_run.py Securitize securitize.io
+	python3 step_run.py Securitize securitize.io
 
 test:
 	pytest tests/ -v --tb=short
@@ -66,20 +67,28 @@ db-reset:
 	docker compose exec postgres psql -U fiftyone -d fiftyone_insight -f /docker-entrypoint-initdb.d/01_schema.sql
 
 run-sample:
-	python step_run.py Securitize securitize.io "Ondo Finance" ondo.finance Centrifuge centrifuge.io
+	python3 step_run.py Securitize securitize.io "Ondo Finance" ondo.finance Centrifuge centrifuge.io
 
 run-batch:
-	python scripts/batch_run.py companies.csv
+	python3 scripts/batch_run.py companies.csv
+
+run-parallel:
+	@if [ -z "$(COMPANIES)" ]; then \
+		echo "Usage: make run-parallel COMPANIES='domain1.com domain2.com domain3.com'"; \
+		echo "Example: make run-parallel COMPANIES='securitize.io ondo.finance centrifuge.io'"; \
+		exit 1; \
+	fi
+	python3 scripts/parallel_run.py $(COMPANIES)
 
 run:
 	@if [ -z "$(COMPANY)" ]; then \
 		echo "Usage: make run COMPANY='Name domain.com'"; \
 		exit 1; \
 	fi
-	python step_run.py $(COMPANY)
+	python3 step_run.py $(COMPANY)
 
 clean:
 	rm -rf output/*.json output/*.xlsx output/*.txt
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
-	rm -rf .pytest_cache .ruff_cache .playwright
+	rm -rf .pytest_cache .ruff_cache .playwright cache
