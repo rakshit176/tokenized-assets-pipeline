@@ -73,8 +73,6 @@ services:
       DATABASE_URL: "postgresql://fiftyone:${POSTGRES_PASSWORD:-fiftyone_secret}@postgres:5432/${POSTGRES_DB:-fiftyone_insight}"
       LLM_PROVIDER: "${LLM_PROVIDER:-openai}"
     depends_on:
-      searxng:
-        condition: service_started
       postgres:
         condition: service_healthy
       redis:
@@ -83,52 +81,87 @@ services:
       - ./output:/app/output
     restart: "no"
 
-  # # ---------- FastAPI application ----------
-  # api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: api
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     ZAI_API_KEY: "${ZAI_API_KEY}"
-  #     ZAI_API_BASE: "${ZAI_API_BASE:-https://open.bigmodel.cn/api/paas/v4/chat/completions}"
-  #     SEARXNG_URL: "http://searxng:8080"
-  #     REDIS_URL: "redis://redis:6379/0"
-  #     PIPELINE_TIMEOUT: "${PIPELINE_TIMEOUT:-30}"
-  #     LOG_LEVEL: "${LOG_LEVEL:-INFO}"
-  #   depends_on:
-  #     searxng:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   volumes:
-  #     - ./output:/app/output
-  #   restart: unless-stopped
+  # ---------- FastAPI application ----------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-fiftyone}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-fiftyone_secret}
+      DB_NAME: ${POSTGRES_DB:-fiftyone_insight}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SEARXNG_URL: "http://searxng:8080"
+      ZAI_API_KEY: "${ZAI_API_KEY}"
+      ZAI_API_BASE: "${ZAI_API_BASE:-https://open.bigmodel.cn/api/paas/v4/chat/completions}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-openai}"
+      LLM_MODEL: "${LLM_MODEL:-gpt-4o}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+    entrypoint: ["uvicorn", "src.api.server:app", "--host", "0.0.0.0", "--port", "8000"]
 
-  # # ---------- Background pipeline worker ----------
-  # worker:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: worker
-  #   command: ["python", "-m", "src.api.cli", "batch"]
-  #   environment:
-  #     ZAI_API_KEY: "${ZAI_API_KEY}"
-  #     ZAI_API_BASE: "${ZAI_API_BASE:-https://open.bigmodel.cn/api/paas/v4/chat/completions}"
-  #     SEARXNG_URL: "http://searxng:8080"
-  #     REDIS_URL: "redis://redis:6379/0"
-  #     PIPELINE_TIMEOUT: "${PIPELINE_TIMEOUT:-30}"
-  #     LOG_LEVEL: "${LOG_LEVEL:-INFO}"
-  #   depends_on:
-  #     searxng:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   volumes:
-  #     - ./output:/app/output
-  #   restart: unless-stopped
+  # ---------- Background pipeline worker ----------
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-fiftyone}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-fiftyone_secret}
+      DB_NAME: ${POSTGRES_DB:-fiftyone_insight}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SEARXNG_URL: "http://searxng:8080"
+      ZAI_API_KEY: "${ZAI_API_KEY}"
+      ZAI_API_BASE: "${ZAI_API_BASE:-https://open.bigmodel.cn/api/paas/v4/chat/completions}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-openai}"
+      LLM_MODEL: "${LLM_MODEL:-gpt-4o}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+    entrypoint: ["python", "-m", "src.api.worker"]
+    deploy:
+      replicas: 2
+
+  # ---------- Frontend application ----------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:8000"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
 
 networks:
   default:

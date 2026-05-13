@@ -119,7 +119,7 @@ class DatabaseSaver:
     def __init__(self, dsn: str | None = None) -> None:
         self.dsn = dsn or os.getenv(
             "DATABASE_URL",
-            "postgresql://fiftyone:fiftyone_secret@localhost:5432/fiftyone_insight",
+            "postgresql://fiftyone:fiftyone_secret@postgres:5432/fiftyone_insight",
         )
         self._pool: asyncpg.Pool | None = None
 
