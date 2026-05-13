@@ -11,6 +11,7 @@ import {
   Database,
   ArrowRight,
 } from "lucide-react";
+import DuplicateDialog from "./DuplicateDialog";
 
 interface SingleProcessProps {
   apiUrl: string;
@@ -32,6 +33,7 @@ export default function SingleProcess({
   const [companyName, setCompanyName] = useState("");
   const [domain, setDomain] = useState("");
   const [jobId, setJobId] = useState<string | null>(null);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [steps, setSteps] = useState<PipelineStep[]>([
     { id: "search", name: "Web Search", status: "pending", message: "" },
     { id: "scrape", name: "Scraping", status: "pending", message: "" },
@@ -63,70 +65,80 @@ export default function SingleProcess({
     });
   };
 
-  const pollJobStatus = async (id: string) => {
+  const pollJobStatus = async (domainToWatch: string) => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${apiUrl}/result/${id}`);
-        const data = await response.json();
-        updateSteps(data.status);
-
-        if (data.status === "completed") {
+        const response = await fetch(`${apiUrl}/company/${domainToWatch}`);
+        if (response.ok) {
+          updateSteps("completed");
           clearInterval(interval);
           setIsRunning(false);
           onViewResults();
-        } else if (data.status === "failed") {
-          clearInterval(interval);
-          setError("Processing failed");
-          setIsRunning(false);
-          setSteps((prev) =>
-            prev.map((step) =>
-              step.id === "extract"
-                ? { ...step, status: "error", message: "Extraction failed" }
-                : step
-            )
-          );
+        } else if (response.status === 404) {
+          // Still processing — advance steps visually
+          updateSteps("running");
         }
       } catch {
-        console.error("Polling error");
+        // Network hiccup — keep polling
       }
     }, 2000);
 
     return () => clearInterval(interval);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const startRun = async (endpoint: "run" | "incremental") => {
+    setShowDuplicateDialog(false);
     setError(null);
     setIsRunning(true);
     setSteps((prev) =>
       prev.map((s) => ({ ...s, status: "pending" as const, message: "" }))
     );
-
     try {
-      const response = await fetch(`${apiUrl}/run`, {
+      const response = await fetch(`${apiUrl}/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ company_name: companyName, domain }),
       });
-
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.detail || "Failed to start processing");
       }
-
       const data = await response.json();
       setJobId(data.job_id);
-      pollJobStatus(data.job_id);
+      pollJobStatus(domain.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start processing");
       setIsRunning(false);
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Check if company already exists in DB
+    try {
+      const res = await fetch(`${apiUrl}/company/${domain.trim()}`);
+      if (res.ok) {
+        setShowDuplicateDialog(true);
+        return;
+      }
+    } catch {
+      // If check fails, proceed normally
+    }
+    startRun("run");
+  };
+
   const isFormValid = companyName.trim() !== "" && domain.trim() !== "";
 
   return (
     <div className="animate-fade-in page-container py-8">
+      {showDuplicateDialog && (
+        <DuplicateDialog
+          duplicates={[{ company_name: companyName, domain }]}
+          onIncremental={() => startRun("incremental")}
+          onScratch={() => startRun("run")}
+          onCancel={() => setShowDuplicateDialog(false)}
+        />
+      )}
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Page Header */}
         <div className="text-center mb-12">

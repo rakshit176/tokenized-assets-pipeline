@@ -3,8 +3,8 @@
 Automated multi-pass data extraction pipeline for 200+ tokenized asset companies. Takes a company name + domain, performs deep web search + scraping + multi-pass LLM extraction, and produces structured output with **303 fields across 17 tables** — each field cited with source URL and confidence score.
 
 ```
-Input:  python step_run.py Securitize securitize.io
-Output: securitize_io.json + securitize_io.xlsx (3 tabs: Schema, LLM Cost, Evaluation)
+Input:  company_name + domain  (e.g. "Securitize", "securitize.io")
+Output: JSON + Excel (.xlsx) + PostgreSQL   (3-tab workbook: Schema, LLM Cost, Evaluation)
 ```
 
 ---
@@ -12,173 +12,307 @@ Output: securitize_io.json + securitize_io.xlsx (3 tabs: Schema, LLM Cost, Evalu
 ## Table of Contents
 
 1. [Features](#features)
-2. [Architecture and Approach](#architecture-and-approach)
+2. [Architecture](#architecture)
 3. [Complete Pipeline Flow](#complete-pipeline-flow)
-4. [Model and Tool Selection Rationale](#model-and-tool-selection-rationale)
-5. [Measured Results](#measured-results)
-6. [Cost and Time Projections](#cost-and-time-projections-200-companies)
-7. [Quick Start](#quick-start)
-8. [Data Schema (17 Tables, 303 Fields)](#data-schema-17-tables-303-fields)
-9. [Project Structure](#project-structure)
-10. [Enhancements Implemented](#enhancements-implemented)
-11. [API and Web Interface](#api-and-web-interface)
-12. [Known Limitations](#known-limitations)
+4. [Quick Start — Docker Compose](#quick-start--docker-compose)
+5. [Environment Variables](#environment-variables)
+6. [API Endpoints](#api-endpoints)
+7. [Web UI](#web-ui)
+8. [Model and Provider Selection](#model-and-provider-selection)
+9. [Measured Results](#measured-results)
+10. [Cost and Time Projections](#cost-and-time-projections)
+11. [Data Schema (17 Tables, 303 Fields)](#data-schema-17-tables-303-fields)
+12. [Project Structure](#project-structure)
+13. [Known Limitations](#known-limitations)
 
 ---
 
 ## Features
 
 ### Core Pipeline
-- **Multi-pass extraction**: 6 LLM batches + knowledge gap fill
-- **Deep web search**: 20 targeted queries via SearXNG
-- **Smart scraping**: httpx + lazy Playwright for SPAs
+- **Multi-pass extraction**: 6 LLM batches + agentic gap search + knowledge gap fill
+- **Deep web search**: 20+ targeted queries via self-hosted SearXNG
+- **Smart scraping**: httpx + lazy Playwright fallback for SPAs; thin-content re-render
+- **Agentic search loop**: LLM autonomously generates targeted queries and selects URLs to scrape for missing fields
 - **303 fields across 17 tables**: Comprehensive tokenized asset data
-- **Cited values**: Every field includes source URL and confidence score
+- **CitedValue[T]**: Every field includes `{ value, source_url, confidence }`
 
-### Production Features ✅
-- **Docker support**: Full containerization with docker-compose
-- **Makefile**: Common development and deployment commands
-- **Caching layer**: File-based LLM response caching (87% cost savings on cache hits)
-- **Parallel processing**: Concurrent company runs with configurable limits
-- **Rate limiting**: Provider-specific rate limits with exponential backoff
-- **Per-field validation**: URL, year, amount, count, status validation
-- **Confidence calibration**: Source reliability scoring and field adjustments
-- **Incremental updates**: Target field extraction (79% faster, 87% cost savings)
-- **Web UI**: FastAPI web interface for pipeline runs
-- **Batch processing**: CSV-based batch runner
-- **Database persistence**: PostgreSQL with LLM cost tracking
-- **Excel output**: 3-tab workbooks (Schema, LLM Cost, Evaluation)
-
-### Developer Experience
-- **Type-safe**: Pydantic models throughout
-- **Testable**: pytest with async support
-- **CI/CD**: GitHub Actions for testing and linting
-- **Documentation**: Inline docstrings and external docs
-- **Error handling**: Comprehensive retry logic and fallbacks
+### Production Features
+- **Full Docker Compose stack**: PostgreSQL, Redis, SearXNG, API, worker, Next.js frontend — single command
+- **FastAPI backend**: Async pipeline execution via `BackgroundTasks`; no ARQ/Celery required
+- **Next.js frontend**: Single and batch processing UI with live progress tracking
+- **Duplicate detection**: Popup dialog when a company already exists — choose Incremental Update or Start from Scratch
+- **Incremental updates**: Re-extract only low-confidence fields — 79% faster, 87% cheaper
+- **Download XLSX**: One-click Excel report download from the company detail page
+- **Batch processing**: CSV upload or manual entry; parallel or sequential execution
+- **Database persistence**: PostgreSQL with LLM cost tracking per field
+- **Provider factory**: Plug-and-play LLM providers (OpenAI, Anthropic, z.ai, OpenRouter) — switch via env var
+- **Caching layer**: File-based LLM response cache (87% cost savings on cache hits)
+- **Rate limiting**: Provider-specific limits with exponential backoff
+- **Per-field validation**: URLs, years, amounts, counts, status codes
+- **Confidence calibration**: Source reliability scoring
 
 ---
 
-## Architecture and Approach
-
-### Design Philosophy
-
-The pipeline follows a **multi-pass extraction** pattern inspired by academic RAG systems: gather broad context first, then extract in focused batches, then fill gaps with targeted follow-up passes. This trades latency for accuracy — each pass improves data quality.
-
-### Architecture Diagram
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    51 INSIGHTS PIPELINE v3                              │
-│                                                                         │
-│  INPUT: company_name + domain (e.g. "Securitize", "securitize.io")     │
-│                                                                         │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │  PHASE 1: DEEP WEB SEARCH (SearXNG, ~28s)                      │   │
-│  │                                                                   │   │
-│  │  20 targeted queries covering all 17 schema tables:              │   │
-│  │  Company overview, products, funding, tech/API, compliance,      │   │
-│  │  partnerships, exchanges, governance, SLA, metrics, employees    │   │
-│  │  Concurrency: 4 parallel with retry + exponential backoff        │   │
-│  │  Results: ~160 URLs + snippets per company                        │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                              │                                          │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │  PHASE 2: SMART SCRAPE (httpx + Playwright fallback, ~17s)      │   │
-│  │                                                                   │   │
-│  │  A. Company domain crawl (31 paths)                              │   │
-│  │  B. Internal link discovery (up to 30 additional pages)         │   │
-│  │  C. Search result pages (top external URLs)                      │   │
-│  │  D. Subdomain/deep pages from search results                    │   │
-│  │                                                                   │   │
-│  │  Two-phase fetch: httpx (fast) → Playwright (lazy, SPAs only)   │   │
-│  │  Content: trafilatura (clean) + selectolax (raw, Rust-backed)   │   │
-│  │  robots.txt: advisory (logs but doesn't block)                   │   │
-│  │  Result: ~10-42 pages with full text + metadata                  │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                              │                                          │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │  PHASE 3: LLM EXTRACTION — 6 PARALLEL BATCHES (~23s)           │   │
-│  │                                                                   │   │
-│  │  Batch A: Company Profile (20 fields)                            │   │
-│  │  Batch B: Products + Assets + Features + Standards (35 fields)  │   │
-│  │  Batch C: Funding + Governance (21 fields)                       │   │
-│  │  Batch D: Compliance + SLA + Stability (18 fields)              │   │
-│  │  Batch E: Tech Stack + API (16 fields)                           │   │
-│  │  Batch F: Partners + Licenses + Metrics + Deals (29 fields)     │   │
-│  │                                                                   │   │
-│  │  Each batch: filtered context → LLM → JSON with citations        │   │
-│  │  Runs concurrently (Semaphore(3) for OpenAI)                     │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                              │                                          │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │  PHASE 4: KNOWLEDGE GAP FILL (~32s)                             │   │
-│  │                                                                   │   │
-│  │  Identify fields with confidence < 0.4                           │   │
-│  │  Run targeted extraction with focused prompt                     │   │
-│  │  Merge results (higher confidence wins)                          │   │
-│  │  Apply defaults for remaining empty fields                       │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                              │                                          │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │  PHASE 5: VALIDATE + OUTPUT (~1s)                               │   │
-│  │                                                                   │   │
-│  │  1. Map LLM JSON → Pydantic CitedValue[T] models                │   │
-│  │  2. Calibrate confidence scores                                   │   │
-│  │  3. Validate per-field (URLs, years, amounts)                   │   │
-│  │  4. Merge multi-pass results (highest confidence wins)           │   │
-│  │  5. Calculate fill metrics (overall, real, high)                 │   │
-│  │  6. Save: JSON + Excel (3 tabs) + PostgreSQL                     │   │
-│  │  7. Log LLM cost per call to database                            │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-│  OUTPUT: JSON + Excel + PostgreSQL                                      │
-└─────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                     51 INSIGHTS PIPELINE v3                            │
+│                                                                        │
+│  INPUT: company_name + domain                                          │
+│                                                                        │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  PHASE 1 — DEEP WEB SEARCH  (SearXNG, ~28s)                    │  │
+│  │  20 targeted queries → ~160 URLs + snippets per company         │  │
+│  │  Concurrency: 8 parallel with retry + exponential backoff       │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  PHASE 2 — SMART SCRAPE  (httpx + Playwright fallback, ~17s)   │  │
+│  │  A. Company domain crawl (45+ paths)                            │  │
+│  │  B. Internal link discovery (up to 50 additional pages)        │  │
+│  │  C. External search-result URLs (top 3 per query)              │  │
+│  │  D. Thin-content fallback: <200 chars → Playwright re-render   │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  PHASE 3 — LLM EXTRACTION  (6 parallel batches, ~23s)          │  │
+│  │  Batch A: Company Profile (20 fields)                           │  │
+│  │  Batch B: Products + Assets + Features + Standards (35 fields)  │  │
+│  │  Batch C: Funding + Governance (21 fields)                      │  │
+│  │  Batch D: Compliance + SLA + Stability (18 fields)              │  │
+│  │  Batch E: Tech Stack + API (16 fields)                          │  │
+│  │  Batch F: Partners + Licenses + Metrics + Deals (29 fields)    │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  PHASE 4 — AGENTIC GAP SEARCH  (~43s, 2 iterations max)        │  │
+│  │  LLM identifies missing fields → generates targeted queries     │  │
+│  │  Selects best URLs from snippets → scrapes → re-extracts        │  │
+│  │  Uses provider factory (same LLM_PROVIDER env var)              │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  PHASE 5 — KNOWLEDGE GAP FILL  (~32s)                          │  │
+│  │  Fields still missing after agentic loop → LLM knowledge fill  │  │
+│  │  Confidence 0.5 (LLM knowledge, no cited source)               │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  PHASE 6 — VALIDATE + OUTPUT  (~1s)                            │  │
+│  │  Pydantic CitedValue[T] mapping → confidence calibration        │  │
+│  │  Per-field validation → multi-pass merge (highest conf wins)   │  │
+│  │  Save: JSON + Excel (3 tabs) + PostgreSQL                       │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                                                                        │
+│  OUTPUT: JSON + Excel (.xlsx) + PostgreSQL                             │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Complete Pipeline Flow
 
-### Input Resolution
-
 ```
-company_name + domain → SearXNG deep_search (20 queries)
-                    → httpx + Playwright scraping
-                    → LLM extraction (6 batches)
-                    → Knowledge gap fill
-                    → Validation + Calibration
-                    → JSON + Excel + PostgreSQL
+company_name + domain
+  → SearXNG deep_search (20 queries, 8 concurrent)
+  → httpx + Playwright scraping (45+ paths, 50 internal links)
+  → 6-batch LLM extraction (parallel)
+  → Agentic gap search loop (2 iterations, cheap LLM calls)
+  → Knowledge gap fill (LLM knowledge for remaining fields)
+  → Validation + calibration
+  → JSON + Excel + PostgreSQL
 ```
 
-### Key Features
-
-- **CitedValue[T]**: Every field has `{value, source_url, confidence}`
-- **Confidence scale**: 0.9 = company website, 0.7 = reputable third-party, 0.5 = LLM knowledge
-- **Multi-pass merge**: Higher confidence values overwrite lower ones
-- **Three fill metrics**: Overall (includes defaults), Real (conf ≥ 0.4), High (conf ≥ 0.7)
+**Key data model:**
+- `CitedValue[T]` — `{ value, source_url, confidence }` on every field
+- Confidence scale: `0.9` = company website, `0.7` = reputable third-party, `0.5` = LLM knowledge
+- Three fill metrics: **Overall** (includes defaults), **Real** (conf ≥ 0.4), **High** (conf ≥ 0.7)
 
 ---
 
-## Model and Tool Selection Rationale
+## Quick Start — Docker Compose
 
-### LLM Provider Selection
+### Prerequisites
 
-| Provider | Model | Cost/1K tokens | Speed | Fill Rate | Why |
-|----------|-------|----------------|-------|-----------|-----|
-| **OpenAI** (selected) | gpt-4o-mini | $0.15/$0.60 | Fast | 94.8% | Best accuracy/cost ratio |
-| z.ai | glm-4-plus-0111 | Free | Slow | 80.7% | Zero cost but lower quality |
-| Anthropic | Claude Sonnet 4 | $3.00/$15.00 | Medium | ~85%* | Highest quality but 20x cost |
-| OpenRouter | 200+ models | Varies | Varies | — | Flexible but adds latency |
+- Docker + Docker Compose v2
+- An LLM API key (OpenAI, Anthropic, z.ai, or OpenRouter)
 
-**Why gpt-4o-mini**: At ~$0.008/company (32K tokens), it delivers 94.8% real fill at high speed. The cost is negligible even at 200+ companies (~$1.60 total).
+### 1. Clone and configure
 
-### Search: SearXNG
+```bash
+git clone <repo>
+cd fiftyone_insight
+cp .env.example .env
+# Edit .env — set at minimum LLM_PROVIDER + the matching API key
+```
 
-**Why SearXNG**: Zero marginal cost, runs in Docker, aggregates 70+ search engines.
+### 2. Start the full stack
 
-### Scraping: httpx + Playwright (lazy)
+```bash
+docker compose up -d
+```
 
-**Why httpx + Playwright lazy**: httpx for 90% of pages, Playwright only for SPA docs.
+This starts six services:
+
+| Service | Port | Description |
+|---------|------|-------------|
+| `postgres` | 5432 | Primary data store |
+| `redis` | 6379 | Cache and queue backend |
+| `searxng` | 8888 | Self-hosted meta-search engine |
+| `api` | 8000 | FastAPI backend |
+| `worker` | — | Background pipeline workers (2 replicas) |
+| `frontend` | 3000 | Next.js web UI |
+
+### 3. Open the UI
+
+```
+http://localhost:3000
+```
+
+Use **Single Process** to run one company or **Batch Intelligence** to upload a CSV.
+
+### 4. Run via CLI (optional)
+
+```bash
+# Single company
+docker compose run --rm pipeline python step_run.py Securitize securitize.io
+
+# Batch from CSV
+docker compose run --rm pipeline python batch_run.py companies.csv
+```
+
+### 5. Useful commands
+
+```bash
+# View logs
+docker compose logs -f api
+docker compose logs -f worker
+
+# Restart API after code changes
+docker compose build api && docker compose up -d api
+
+# Rebuild frontend after UI changes
+docker compose build frontend && docker compose up -d frontend
+
+# Stop everything
+docker compose down
+
+# Stop and remove volumes (wipes DB)
+docker compose down -v
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in:
+
+```bash
+# LLM provider — one of: openai | anthropic | zai | openrouter
+LLM_PROVIDER=openai
+LLM_MODEL=gpt-4o-mini
+
+# Provider API keys (only the selected provider is required)
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+ZAI_API_KEY=...
+OPENROUTER_API_KEY=sk-or-...
+
+# Database (defaults match docker-compose.yml)
+POSTGRES_DB=fiftyone_insight
+POSTGRES_USER=fiftyone
+POSTGRES_PASSWORD=fiftyone_secret
+
+# SearXNG (auto-configured in Docker)
+SEARXNG_URL=http://searxng:8080
+SEARXNG_SECRET=change_me
+
+# Redis (auto-configured in Docker)
+REDIS_HOST=redis
+REDIS_PORT=6379
+```
+
+---
+
+## API Endpoints
+
+The FastAPI backend runs on `http://localhost:8000`. Interactive docs at `/docs`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Service health check |
+| `POST` | `/run` | Run pipeline for a single company (async) |
+| `POST` | `/incremental` | Incremental update — re-extract low-confidence fields only |
+| `POST` | `/batch` | Run pipeline for multiple companies (async, parallel) |
+| `GET` | `/companies` | List all processed companies |
+| `GET` | `/company/{domain}` | Get full company detail by domain |
+| `GET` | `/download/{domain}` | Download Excel report (.xlsx) |
+| `GET` | `/docs` | OpenAPI interactive documentation |
+
+### Example: Run single company
+
+```bash
+curl -X POST http://localhost:8000/run \
+  -H "Content-Type: application/json" \
+  -d '{"company_name": "Securitize", "domain": "securitize.io"}'
+```
+
+### Example: Batch run
+
+```bash
+curl -X POST http://localhost:8000/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "companies": [
+      {"company_name": "Securitize", "domain": "securitize.io"},
+      {"company_name": "Ondo Finance", "domain": "ondo.finance"}
+    ],
+    "max_concurrent": 3
+  }'
+```
+
+Poll for completion with `GET /company/{domain}` — returns 404 while processing, 200 when done.
+
+---
+
+## Web UI
+
+The Next.js frontend (`http://localhost:3000`) provides:
+
+### Single Process
+- Enter company name + domain → run the full pipeline
+- Live step-by-step progress (Web Search → Scraping → Extraction → Validation → Save)
+- If the company already exists in the database, a popup asks:
+  - **Incremental Update** — only re-extracts low-confidence and missing fields (faster, cheaper)
+  - **Start from Scratch** — full re-run, replaces all existing data
+
+### Batch Intelligence
+- Upload a CSV (`company_name, domain` columns) or add companies manually
+- Duplicate detection: shows a dialog when any submitted company already exists
+- Live per-company status tracking
+- Summary stats on completion
+
+### Company Dashboard
+- Browse all processed companies with status and fill rates
+- View full company detail (all 17 tables, cited sources)
+- **Download XLSX** button for one-click Excel export
+
+---
+
+## Model and Provider Selection
+
+The pipeline uses a **provider factory** — switch providers by changing `LLM_PROVIDER` in `.env`. No code changes needed.
+
+| Provider | Model (default) | Cost/1M tokens | Fill Rate | Notes |
+|----------|----------------|----------------|-----------|-------|
+| `openai` | gpt-4o-mini | $0.15 in / $0.60 out | ~95% | Best accuracy/cost ratio — recommended |
+| `zai` | glm-4-plus | Free | ~81% | Zero cost, lower quality |
+| `anthropic` | claude-sonnet-4 | $3.00 in / $15.00 out | ~85% | Highest quality, 20× cost |
+| `openrouter` | configurable | varies | varies | 200+ models via single API |
+
+**Agentic loop** uses the same `LLM_PROVIDER` — cheap calls with small context windows to decide which URLs to scrape next.
 
 ---
 
@@ -186,38 +320,27 @@ company_name + domain → SearXNG deep_search (20 queries)
 
 ### Per-Company Performance (OpenAI gpt-4o-mini)
 
-| Company | Real Fill | High Fill | Pages | Tokens | Cost (USD) | Time |
-|---------|-----------|-----------|-------|--------|------------|------|
-| **Securitize** | **94.8%** | 42.9% | 10 | 32,208 | $0.0079 | 89s |
-| **Ondo Finance** | **79.3%** | 24.3% | 4 | 33,010 | $0.0079 | 90s |
-| **Centrifuge** | **76.4%** | 36.9% | 42 | 32,603 | $0.0078 | 120s |
-| **Average** | **83.5%** | 34.7% | 19 | 32,607 | $0.0079 | 100s |
+| Company | Real Fill | High Fill | Pages Scraped | Tokens | Cost | Time |
+|---------|-----------|-----------|---------------|--------|------|------|
+| Securitize | 94.8% | 42.9% | 10 | 32,208 | $0.0079 | 89s |
+| Ondo Finance | 79.3% | 24.3% | 4 | 33,010 | $0.0079 | 90s |
+| Centrifuge | 76.4% | 36.9% | 42 | 32,603 | $0.0078 | 120s |
+| **Average** | **83.5%** | **34.7%** | 19 | 32,607 | $0.0079 | 100s |
 
-### With Enhancements
+### Mode Comparison
 
-| Mode | Time | Cost | Savings |
-|------|------|------|---------|
-| Full extraction | 80s | $0.008 | Baseline |
-| **With cache hit** | <1s | $0 | 99% time, 100% cost |
-| **Targeted update** | 17s | $0.001 | 79% time, 87% cost |
+| Mode | Time | Cost | Savings vs baseline |
+|------|------|------|---------------------|
+| Full extraction | ~100s | $0.008 | baseline |
+| With cache hit | <1s | $0.000 | 99% time, 100% cost |
+| Incremental update | ~17s | $0.001 | 79% time, 87% cost |
 
 ---
 
 ## Cost and Time Projections
 
-### Per-Company Cost Breakdown
-
-| Component | Cost | Notes |
-|-----------|------|-------|
-| LLM (gpt-4o-mini, 32K tokens) | $0.008 | OpenAI JSON mode |
-| Search (SearXNG) | $0.000 | Self-hosted |
-| Scraping (httpx + Playwright) | $0.000 | Self-hosted |
-| **Total per company** | **$0.008** | |
-
-### Scaling Projections
-
-| Companies | Sequential | 3 Workers | 5 Workers | Cost |
-|-----------|-----------|-----------|-----------|------|
+| Companies | Sequential | 3 Workers | 5 Workers | Total Cost |
+|-----------|-----------|-----------|-----------|------------|
 | 1 | 100s | 100s | 100s | $0.008 |
 | 10 | 17 min | 7 min | 5 min | $0.08 |
 | 50 | 83 min | 33 min | 22 min | $0.40 |
@@ -225,72 +348,11 @@ company_name + domain → SearXNG deep_search (20 queries)
 
 ---
 
-## Quick Start
-
-### Using Docker (Recommended)
-
-```bash
-# Start infrastructure
-docker compose up -d
-
-# Run pipeline
-docker compose run pipeline python step_run.py Securitize securitize.io
-
-# Batch processing
-docker compose -f docker-compose.batch.yml run --rm pipeline
-```
-
-### Using Makefile
-
-```bash
-# Install dependencies
-make install
-
-# Run single company
-make run COMPANY="Securitize securitize.io"
-
-# Run sample companies
-make run-sample
-
-# Run in parallel
-make run-parallel COMPANIES="securitize.io ondo.finance centrifuge.io"
-
-# Run validation
-python3 scripts/validate_output.py output/*.json
-
-# Run incremental update
-python3 scripts/incremental_update.py securitize.io
-```
-
-### Using Python Directly
-
-```bash
-# Single company
-python3 step_run.py Securitize securitize.io
-
-# Multiple companies
-python3 step_run.py Securitize securitize.io "Ondo Finance" ondo.finance
-
-# Parallel processing
-python3 scripts/parallel_run.py --max-concurrent 3 securitize.io ondo.finance
-```
-
-### Environment Setup
-
-```bash
-cp .env.example .env
-# Edit .env with your API keys
-export OPENAI_API_KEY=sk-...
-export LLM_PROVIDER=openai  # or zai, anthropic, openrouter
-```
-
----
-
 ## Data Schema (17 Tables, 303 Fields)
 
 | # | Table | Type | Fields | Purpose |
 |---|-------|------|--------|---------|
-| 1 | companies (profile) | Single row | 20 | Identity, location, status |
+| 1 | companies | Single row | 20 | Identity, location, status |
 | 2 | products | Multi-row | 9 | Product catalog with pricing |
 | 3 | asset_classes | Multi-row | 5 | Tokenized asset types |
 | 4 | features | Multi-row | 5 | Platform feature breakdown |
@@ -320,120 +382,58 @@ fiftyone_insight/
 │   ├── schema/
 │   │   └── models.py                # 17 Pydantic tables with CitedValue[T]
 │   ├── search/
-│   │   └── client.py                # SearXNG client — deep_search, gap_search
+│   │   ├── client.py                # SearXNG client — deep_search, gap_search
+│   │   └── agentic.py               # Agentic search loop — LLM-driven gap search
 │   ├── scrape/
 │   │   └── scraper.py               # Async httpx + Playwright scraper
 │   ├── extractor/
 │   │   └── llm.py                   # 6-batch LLM extraction + gap fill
 │   ├── providers/
 │   │   ├── base.py                  # BaseLLMProvider + LLMCallResult
+│   │   ├── factory.py               # Provider selection (get_provider())
 │   │   ├── zai_provider.py          # z.ai (free GLM models)
 │   │   ├── openai_provider.py       # OpenAI (GPT-4o-mini)
 │   │   ├── anthropic_provider.py    # Anthropic (Claude Sonnet 4)
 │   │   ├── openrouter_provider.py   # OpenRouter (200+ models)
-│   │   ├── factory.py              # Provider selection
-│   │   └── structured_outputs.py   # Structured outputs schemas
+│   │   └── structured_outputs.py   # JSON mode schemas
 │   ├── database/
-│   │   └── saver.py                 # PostgreSQL persistence + LLM cost tracking
-│   ├── cache.py                      # File-based LLM response caching
-│   ├── rate_limit.py                 # Rate limiting protection
-│   ├── calibration.py                # Confidence calibration
-│   ├── validation.py                  # Per-field validation
-│   ├── incremental.py                 # Incremental update mode
-│   └── api/
-│       ├── server.py                # FastAPI server with web UI
-│       └── cli.py                   # Click CLI
-├── scripts/
-│   ├── batch_run.py                 # CSV batch processing
-│   ├── parallel_run.py              # Concurrent company processing
-│   ├── incremental_update.py        # Targeted field updates
-│   └── validate_output.py           # Validation tool
+│   │   └── saver.py                 # PostgreSQL persistence + cost tracking
+│   ├── api/
+│   │   └── server.py                # FastAPI — /run, /batch, /incremental, /download
+│   ├── incremental.py               # Targeted field re-extraction
+│   ├── cache.py                     # File-based LLM response cache
+│   ├── rate_limit.py                # Rate limiting + exponential backoff
+│   ├── calibration.py               # Confidence calibration
+│   └── validation.py                # Per-field validation
+├── frontend/                        # Next.js 15 web UI
+│   └── src/components/
+│       ├── SingleProcess.tsx        # Single company pipeline UI
+│       ├── BatchProcess.tsx         # Batch processing UI
+│       ├── CompanyDetails.tsx       # Company detail + XLSX download
+│       ├── CompanyList.tsx          # Companies dashboard
+│       └── DuplicateDialog.tsx      # Incremental vs scratch popup
 ├── database/
 │   └── schema.sql                   # PostgreSQL schema (19 tables)
 ├── config/
 │   └── searxng/settings.yml         # SearXNG configuration
-├── output/                           # Pipeline results (JSON + Excel)
-├── tests/                            # pytest suite
-├── Makefile                          # Common commands
-├── docker-compose.yml               # Full stack
-├── docker-compose.batch.yml         # Batch processing
-├── Dockerfile                        # Pipeline container
+├── output/                          # Pipeline results (JSON + Excel)
+├── tests/                           # pytest suite
+├── step_run.py                      # CLI entrypoint — single company
+├── batch_run.py                     # CLI entrypoint — batch from CSV
+├── docker-compose.yml               # Full stack (6 services)
+├── Dockerfile                       # Pipeline + API container
 ├── .env.example                     # Environment template
-├── requirements.txt                  # Python dependencies
-└── README.md
+└── requirements.txt                 # Python dependencies
 ```
-
----
-
-## Enhancements Implemented
-
-### ✅ Completed Features
-
-| Feature | Benefit | Status |
-|---------|---------|--------|
-| **Caching layer** | 99% time/cost savings on cache hits | Implemented |
-| **Parallel processing** | Linear scalability with workers | Implemented |
-| **Rate limiting** | Prevents 429 errors, exponential backoff | Implemented |
-| **Per-field validation** | Catches data errors | Implemented |
-| **Confidence calibration** | Improved accuracy via source scoring | Implemented |
-| **Incremental updates** | 87% cost savings for updates | Implemented |
-| **Web UI** | User-friendly interface | Implemented |
-| **Batch processing** | CSV-based workflows | Implemented |
-| **Docker support** | Production-ready containerization | Implemented |
-| **Makefile** | Developer productivity | Implemented |
-| **Structured outputs** | JSON mode for guaranteed valid JSON | Implemented |
-| **Validation tool** | Post-extraction data verification | Implemented |
-
-### Performance Improvements
-
-- **Cache hits**: <1s, $0 (vs 80s, $0.008 baseline)
-- **Targeted updates**: 17s, $0.001 (79% faster, 87% cheaper)
-- **Parallel runs**: Scales linearly with workers
-- **Rate limiting**: Prevents API throttling with smart backoff
-
----
-
-## API and Web Interface
-
-### FastAPI Server
-
-```bash
-# Start server
-uvicorn src.api.server:app --reload
-
-# Access web UI
-open http://localhost:8000
-```
-
-### API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /` | Web UI | HTML interface for pipeline runs |
-| `POST /run` | Run single company | Submit company for extraction |
-| `POST /batch` | Run multiple companies | Batch processing |
-| `GET /result/{job_id}` | Get results | Poll job status |
-| `GET /health` | Health check | Service status |
-| `GET /docs` | API docs | Interactive OpenAPI docs |
 
 ---
 
 ## Known Limitations
 
-### Current Limitations
-
-1. **Website scraping coverage** — Some sites block automated requests, yielding fewer pages
-2. **LLM non-determinism** — Same company may get slightly different results across runs (~1-2% variance)
-3. **Single-model extraction** — All batches use the same model (could optimize with model routing)
-
-### Future Improvements
-
-| Feature | Priority | Impact |
-|---------|----------|--------|
-| Multi-model routing | Medium | 40% cost reduction |
-| Embedding-based page ranking | High | Improved accuracy |
-| External API validation | Medium | Better funding/employee data |
-| Human-in-the-loop review | Low | Flag uncertain fields for review |
+1. **Scraping blocks**: Some sites reject automated requests — fewer pages scraped, lower fill rate
+2. **LLM non-determinism**: Same company may get ±1–2% variance across runs
+3. **Agentic loop exits early**: If the LLM judges existing context sufficient, it won't issue more queries even when fields are missing
+4. **No job-ID tracking**: Pipeline status is tracked by domain (`GET /company/{domain}`), not by job ID
 
 ---
 

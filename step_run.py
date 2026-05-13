@@ -245,7 +245,7 @@ async def run_company(company_name: str, domain: str):
     t2 = time.time()
     scraper = AsyncScraper(timeout=10, max_concurrent=8, use_playwright=True)
     cp = await scraper.get_company_pages(domain)
-    sp = await scraper.scrape_search_urls(sr, max_per_query=2, max_total=10, exclude_domain=domain)
+    sp = await scraper.scrape_search_urls(sr, max_per_query=3, max_total=20, exclude_domain=domain)
     subdomain_urls = []
     for q, results in sr.items():
         for r in results:
@@ -253,7 +253,7 @@ async def run_company(company_name: str, domain: str):
             if url and domain in url and url not in cp and url not in sp:
                 subdomain_urls.append(url)
     if subdomain_urls:
-        sdp = await scraper.scrape_urls(subdomain_urls[:8])
+        sdp = await scraper.scrape_urls(subdomain_urls[:15])
         sp.update(sdp)
     all_pages = {**cp, **sp}
     scrape_time = time.time() - t2
@@ -271,18 +271,47 @@ async def run_company(company_name: str, domain: str):
     PipelineRunner._merge_data(cd, PipelineRunner._structure_output(ex, company_name, domain))
     cd.apply_defaults(company_name, domain)
 
-    # Step 4: Knowledge gap fill
-    print("  [4/5] Knowledge gap fill...", end=" ", flush=True)
+    # Step 4: Agentic search loop — AI decides what to search + which URLs to scrape
+    print("  [4/5] Agentic gap search...", end=" ", flush=True)
     t4 = time.time()
     missing = cd.missing_fields(0.4)
+    agentic_pages_count = 0
     if missing:
-        kg = await ext.extract_knowledge_gaps(company_name, domain, missing)
+        try:
+            from src.search.agentic import agentic_search_loop
+            new_pages = await agentic_search_loop(
+                company_name=company_name,
+                domain=domain,
+                missing_fields=missing,
+                searcher=s,
+                scraper=scraper,
+                max_iterations=2,
+                target_fields_remaining=10,
+            )
+            agentic_pages_count = len(new_pages)
+            if new_pages:
+                # Re-run extraction on newly discovered pages
+                all_pages_extended = {**all_pages, **new_pages}
+                ex2 = await ext.extract_all(company_name, domain, sr, all_pages_extended)
+                cd2 = CompanyData()
+                PipelineRunner._merge_data(cd2, PipelineRunner._structure_output(ex2, company_name, domain))
+                PipelineRunner._merge_data(cd, cd2)
+                cd.apply_defaults(company_name, domain)
+                all_pages = all_pages_extended
+        except Exception as e:
+            print(f"\n    Agentic loop error: {e}", flush=True)
+
+    # Knowledge gap fill — LLM knowledge for anything still missing
+    missing2 = cd.missing_fields(0.4)
+    if missing2:
+        kg = await ext.extract_knowledge_gaps(company_name, domain, missing2)
         if kg:
             kg_data = PipelineRunner._structure_output(kg, company_name, domain)
             PipelineRunner._merge_data(cd, kg_data)
         cd.apply_defaults(company_name, domain)
+
     gap_time = time.time() - t4
-    print(f"{len(missing)} gaps filled ({gap_time:.1f}s)", flush=True)
+    print(f"{len(missing)} gaps, {agentic_pages_count} new pages ({gap_time:.1f}s)", flush=True)
 
     # Calculate metrics
     rf = cd.real_fill_score(0.4)

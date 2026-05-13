@@ -12,17 +12,21 @@ Endpoints:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import pathlib
+import uuid
 from typing import Optional
 
-from arq import create_pool
-from arq.connections import RedisSettings
+from dotenv import load_dotenv
+load_dotenv(pathlib.Path(__file__).resolve().parents[2] / ".env")
+
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from .arq_worker import process_company
 from .database import db, CompanyBase, CompanyDetail
 
 
@@ -116,99 +120,79 @@ async def shutdown():
 @app.get("/health", response_model=HealthResponse)
 async def health():
     """Health check endpoint."""
-    redis_status = "disconnected"
-    db_status = "connected"
-
-    try:
-        redis = await create_pool(RedisSettings(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6379")),
-        ))
-        redis_status = "connected"
-        await redis.close()
-    except Exception as e:
-        logger.warning(f"Redis health check failed: {e}")
-        redis_status = "disconnected"
-
+    db_status = "connected" if db.pool else "disconnected"
     return HealthResponse(
         status="healthy",
         version="2.0.0",
-        redis=redis_status,
+        redis="n/a",
         database=db_status,
     )
 
 
+async def _run_and_save(job_id: str, company_name: str, domain: str):
+    """Run pipeline for one company and save result to DB. Used by both /run and /batch."""
+    import sys, pathlib
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+    from step_run import run_company
+    try:
+        await run_company(company_name, domain)
+    except Exception as e:
+        logger.error("Pipeline failed for %s (%s): %s", company_name, domain, e)
+
+
 @app.post("/run", response_model=RunResponse)
 async def run_single(req: RunRequest, background_tasks: BackgroundTasks):
-    """
-    Run pipeline for a single company.
-
-    The job is processed asynchronously by ARQ workers.
-    Returns immediately with a job_id for polling.
-    """
-    try:
-        redis = await create_pool(RedisSettings(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6379")),
-        ))
-
-        job = await redis.enqueue_job(
-            'process_company',
-            company_name=req.company_name,
-            domain=req.domain,
-            timeout=req.timeout,
-        )
-
-        await redis.close()
-
-        return RunResponse(
-            job_id=job.job_id,
-            company_name=req.company_name,
-            domain=req.domain,
-            status="queued",
-        )
-
-    except Exception as e:
-        logger.error(f"Failed to enqueue job: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    """Run pipeline for a single company. Returns immediately; pipeline runs in background."""
+    job_id = str(uuid.uuid4())
+    background_tasks.add_task(_run_and_save, job_id, req.company_name, req.domain)
+    return RunResponse(
+        job_id=job_id,
+        company_name=req.company_name,
+        domain=req.domain,
+        status="running",
+    )
 
 
 @app.post("/batch", response_model=BatchResponse)
 async def run_batch(req: BatchRequest, background_tasks: BackgroundTasks):
-    """
-    Run pipeline for multiple companies.
+    """Run pipeline for multiple companies.
 
-    Jobs are processed asynchronously by ARQ workers.
-    Returns immediately with job_ids for polling.
+    Uses max_concurrent workers (like batch_run.py):
+    - max_concurrent=1 → sequential
+    - max_concurrent>1 → parallel asyncio.gather in batches
+    Returns immediately; all jobs run in background.
     """
-    try:
-        redis = await create_pool(RedisSettings(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6379")),
+    from step_run import run_company
+
+    async def _run_batch_async():
+        companies = [(c.company_name, c.domain) for c in req.companies]
+        if req.max_concurrent <= 1:
+            for name, domain in companies:
+                try:
+                    await run_company(name, domain)
+                except Exception as e:
+                    logger.error("Batch pipeline failed for %s: %s", name, e)
+        else:
+            # Process in parallel chunks of max_concurrent
+            for i in range(0, len(companies), req.max_concurrent):
+                chunk = companies[i:i + req.max_concurrent]
+                await asyncio.gather(
+                    *[run_company(name, domain) for name, domain in chunk],
+                    return_exceptions=True,
+                )
+
+    jobs = []
+    for company in req.companies:
+        job_id = str(uuid.uuid4())
+        jobs.append(RunResponse(
+            job_id=job_id,
+            company_name=company.company_name,
+            domain=company.domain,
+            status="running",
         ))
 
-        jobs = []
-        for company in req.companies:
-            job = await redis.enqueue_job(
-                'process_company',
-                company_name=company.company_name,
-                domain=company.domain,
-                timeout=company.timeout,
-            )
-            jobs.append(RunResponse(
-                job_id=job.job_id,
-                company_name=company.company_name,
-                domain=company.domain,
-                status="queued",
-            ))
-
-        await redis.close()
-
-        return BatchResponse(jobs=jobs)
-
-    except Exception as e:
-        logger.error(f"Failed to enqueue batch jobs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    background_tasks.add_task(_run_batch_async)
+    return BatchResponse(jobs=jobs)
 
 
 @app.get("/companies", response_model=list[CompanyBase])
@@ -253,85 +237,44 @@ async def get_company(domain: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/incremental", response_model=RunResponse)
+async def run_incremental(req: RunRequest, background_tasks: BackgroundTasks):
+    """Incremental update for an existing company — only re-extracts low-confidence fields."""
+    job_id = str(uuid.uuid4())
+
+    async def _run_incremental():
+        import sys
+        sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+        from src.incremental import targeted_update
+        try:
+            await targeted_update(req.company_name, req.domain)
+        except Exception as e:
+            logger.error("Incremental update failed for %s: %s", req.domain, e)
+
+    background_tasks.add_task(_run_incremental)
+    return RunResponse(job_id=job_id, company_name=req.company_name, domain=req.domain, status="running")
+
+
+@app.get("/download/{domain}")
+async def download_xlsx(domain: str):
+    """Download the Excel report for a company by domain (e.g. ondo.finance)."""
+    safe_name = domain.replace(".", "_")
+    output_dir = pathlib.Path(__file__).resolve().parents[2] / "output"
+    xlsx_path = output_dir / f"{safe_name}.xlsx"
+    if not xlsx_path.exists():
+        raise HTTPException(status_code=404, detail=f"Report not found for {domain}. Run the pipeline first.")
+    return FileResponse(
+        path=str(xlsx_path),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename=f"{safe_name}_report.xlsx",
+    )
+
+
 @app.get("/result/{job_id}", response_model=ResultResponse)
 async def get_result(job_id: str):
-    """
-    Get the status and result of a pipeline job by job_id.
-
-    Poll this endpoint to check job progress.
-    Returns status: queued, running, completed, or failed.
-    """
-    try:
-        redis = await create_pool(RedisSettings(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6379")),
-        ))
-
-        # Check job status by looking at ARQ Redis keys
-        result_key = f"arq:result:{job_id}"
-        in_progress_key = f"arq:in-progress:{job_id}"
-        retry_key = f"arq:retry:{job_id}"
-
-        # Check all keys before closing connection
-        in_progress = await redis.exists(in_progress_key)
-        result_data = await redis.get(result_key)
-        has_retry = await redis.exists(retry_key)
-
-        await redis.close()
-
-        if in_progress:
-            return ResultResponse(
-                job_id=job_id,
-                status="running",
-            )
-
-        if result_data:
-            import pickle
-            result = pickle.loads(result_data)
-            # ARQ stores function results directly
-            status = result.get('status', 'unknown')
-            raw_errors = result.get('errors', [])
-
-            # Normalize errors to list
-            if isinstance(raw_errors, str):
-                errors = [raw_errors] if raw_errors else []
-            else:
-                errors = raw_errors if isinstance(raw_errors, list) else []
-
-            # Simple logic: completed + no errors = success, everything else = failed
-            if status == 'completed' and not errors:
-                return ResultResponse(
-                    job_id=job_id,
-                    status="completed",
-                    fill_rate=result.get('fill_rate'),
-                    total_cost_usd=result.get('cost_usd'),
-                    errors=[],
-                    data=result,
-                )
-            else:
-                return ResultResponse(
-                    job_id=job_id,
-                    status="failed",
-                    fill_rate=result.get('fill_rate'),
-                    total_cost_usd=result.get('cost_usd'),
-                    errors=errors if errors else ['Unknown error'],
-                    data=result,
-                )
-
-        # Job might be queued or not exist
-        if has_retry:
-            return ResultResponse(
-                job_id=job_id,
-                status="queued",
-            )
-
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to get job result {job_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    """Get pipeline result by looking up the company in DB by job_id is not tracked —
+    use GET /companies or GET /company/{domain} to check results."""
+    raise HTTPException(status_code=410, detail="Use GET /company/{domain} to check results")
 
 
 if __name__ == "__main__":

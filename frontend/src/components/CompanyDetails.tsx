@@ -14,6 +14,7 @@ import {
   Linkedin,
   Twitter,
   Database,
+  Download,
 } from "lucide-react";
 
 interface CompanyDetailsProps {
@@ -210,15 +211,27 @@ export default function CompanyDetails({
               </p>
             </div>
           </div>
-          <a
-            href={`https://${company.domain}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-brand-outline flex items-center gap-2"
-          >
-            <Globe className="w-4 h-4" />
-            <span>Visit Website</span>
-          </a>
+          <div className="flex items-center gap-2">
+            {company.status === "completed" && (
+              <a
+                href={`${apiUrl}/download/${company.domain}`}
+                download
+                className="btn-brand flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download XLSX</span>
+              </a>
+            )}
+            <a
+              href={`https://${company.domain}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-brand-outline flex items-center gap-2"
+            >
+              <Globe className="w-4 h-4" />
+              <span>Visit Website</span>
+            </a>
+          </div>
         </div>
 
         {/* Status Banner */}

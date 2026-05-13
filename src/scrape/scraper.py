@@ -180,7 +180,12 @@ class _RobotsCache:
 # ---------------------------------------------------------------------------
 
 # Paths where Playwright is likely needed (SPA docs portals)
-_PLAYWRIGHT_PATHS = {"/docs", "/documentation", "/api", "/developers", "/developer"}
+_PLAYWRIGHT_PATHS = {
+    "/docs", "/documentation", "/api", "/developers", "/developer",
+    "/api-docs", "/sandbox", "/playground", "/technology",
+    "/infrastructure", "/marketplace", "/exchange",
+    "/investor-relations", "/press", "/news",
+}
 
 class AsyncScraper:
     """Async HTTP scraper with lazy Playwright for SPA pages.
@@ -201,13 +206,20 @@ class AsyncScraper:
 
     COMPANY_PATHS = [
         "/", "/about", "/about-us", "/team", "/company",
-        "/docs", "/documentation", "/api", "/developers",
+        "/docs", "/documentation", "/api", "/developers", "/developer",
         "/products", "/solutions", "/services", "/platform",
         "/pricing", "/partners", "/partnerships",
         "/compliance", "/security", "/legal", "/regulatory",
         "/careers", "/jobs", "/blog", "/resources",
         "/case-studies", "/customers", "/contact",
         "/governance", "/token", "/whitepaper", "/faq",
+        "/press", "/news", "/media", "/announcements",
+        "/investor-relations", "/investors",
+        "/technology", "/infrastructure", "/integrations",
+        "/marketplace", "/exchange", "/secondary-market",
+        "/licenses", "/regulations", "/certifications",
+        "/api-docs", "/sandbox", "/playground",
+        "/aum", "/metrics", "/traction",
     ]
 
     def __init__(
@@ -299,17 +311,25 @@ class AsyncScraper:
 
     @staticmethod
     def _should_try_playwright(url: str, html: str) -> bool:
-        """Only use Playwright for docs/API pages with SPA markers."""
+        """Use Playwright for SPA pages or any page with thin extracted content."""
         path = urlparse(url).path.rstrip("/")
-        # Only attempt Playwright for known SPA-heavy paths
-        if path not in _PLAYWRIGHT_PATHS:
-            return False
-        # And only if the content looks like an empty shell
-        if len(html.strip()) < 500:
-            return True
         spa_markers = ("__NEXT_DATA__", "window.__nuxt__", "ng-version",
                        '<div id="root"></div>', '<div id="app"></div>')
-        return any(m in html for m in spa_markers)
+
+        # Always try Playwright for known SPA-heavy paths with shell content
+        if path in _PLAYWRIGHT_PATHS:
+            if len(html.strip()) < 500:
+                return True
+            if any(m in html for m in spa_markers):
+                return True
+
+        # Fallback: any page where httpx returned suspiciously thin visible text
+        stripped = re.sub(r"<[^>]+>", "", html)
+        stripped = re.sub(r"\s+", " ", stripped).strip()
+        if len(stripped) < 200:
+            return True
+
+        return False
 
     # ------------------------------------------------------------------
     # Core scrape logic
@@ -418,7 +438,7 @@ class AsyncScraper:
                 discovered.append(link)
 
         if discovered:
-            extra = await self.scrape_urls(discovered[:30])  # Increased from 20 → 30
+            extra = await self.scrape_urls(discovered[:50])
             scraped.update(extra)
 
         return scraped

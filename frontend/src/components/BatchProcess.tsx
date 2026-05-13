@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, type MouseEvent } from "react";
 import {
   Upload,
   Loader2,
@@ -10,6 +10,7 @@ import {
   X,
   FileSpreadsheet,
 } from "lucide-react";
+import DuplicateDialog from "./DuplicateDialog";
 
 interface BatchProcessProps {
   apiUrl: string;
@@ -40,6 +41,8 @@ export default function BatchProcess({
 }: BatchProcessProps) {
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [duplicates, setDuplicates] = useState<{ company_name: string; domain: string }[]>([]);
+  const [pendingMode, setPendingMode] = useState<"run" | "incremental" | null>(null);
   const [globalStatus, setGlobalStatus] = useState<
     "idle" | "processing" | "completed" | "error"
   >("idle");
@@ -147,9 +150,9 @@ export default function BatchProcess({
     return true;
   }, [companies]);
 
-  const processBatch = async () => {
-    if (!validateBatch()) return;
-
+  const startBatch = async (mode: "run" | "incremental") => {
+    setDuplicates([]);
+    setPendingMode(null);
     setIsProcessing(true);
     setGlobalStatus("processing");
     setGlobalError(null);
@@ -157,6 +160,19 @@ export default function BatchProcess({
     const validCompanies = companies.filter((c) => c.status !== "error");
 
     try {
+      // For incremental: call /incremental per company; for run: use /batch
+      if (mode === "incremental") {
+        for (const c of validCompanies) {
+          await fetch(`${apiUrl}/incremental`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ company_name: c.company_name, domain: c.domain, timeout: 180 }),
+          });
+        }
+        pollBatchResults(validCompanies);
+        return;
+      }
+
       const response = await fetch(`${apiUrl}/batch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -176,8 +192,8 @@ export default function BatchProcess({
 
       const data = await response.json();
 
-      // Update companies with job IDs
-      data.forEach((result: { company_name: string; domain: string; job_id: string }) => {
+      // Update companies with job IDs — API returns { jobs: [...] }
+      (data.jobs ?? data).forEach((result: { company_name: string; domain: string; job_id: string }) => {
         const companyIndex = companies.findIndex(
           (c) =>
             c.company_name === result.company_name &&
@@ -191,7 +207,7 @@ export default function BatchProcess({
         }
       });
 
-      pollBatchResults();
+      pollBatchResults(validCompanies);
     } catch (err) {
       setGlobalStatus("error");
       setGlobalError(
@@ -201,55 +217,37 @@ export default function BatchProcess({
     }
   };
 
-  const pollBatchResults = async () => {
-    const completed = new Set<number>();
+  const pollBatchResults = (submittedCompanies?: CompanyRow[]) => {
+    const toWatch = submittedCompanies ?? companies.filter((c) => c.status !== "error");
+    const done = new Set<string>();
 
     const interval = setInterval(async () => {
-      const pendingCompanies = companies.filter(
-        (c, i) => c.status === "processing" && !completed.has(i)
-      );
+      const pending = toWatch.filter((c) => !done.has(c.domain));
 
-      if (pendingCompanies.length === 0) {
+      if (pending.length === 0) {
         clearInterval(interval);
         setIsProcessing(false);
-
-        const allCompleted = companies.every((c) => c.status === "completed");
-        const anyHasErrors = companies.some((c) => c.status === "error");
-
-        setGlobalStatus(
-          allCompleted ? "completed" : anyHasErrors ? "completed" : "idle"
-        );
+        setGlobalStatus("completed");
         return;
       }
 
-      for (const company of pendingCompanies) {
-        if (!company.job_id) continue;
-
+      for (const company of pending) {
         try {
-          const response = await fetch(`${apiUrl}/result/${company.job_id}`);
-          const data = await response.json();
-
-          const companyIndex = companies.findIndex(
-            (c) => c.job_id === company.job_id
-          );
-          if (companyIndex === -1) continue;
-
-          if (data.status === "completed") {
-            updateCompany(companyIndex, {
-              status: "completed" as const,
-              fill_rate: data.fill_rate,
-              cost_usd: data.total_cost_usd,
-            });
-            completed.add(companyIndex);
-          } else if (data.status === "failed") {
-            updateCompany(companyIndex, {
-              status: "error" as const,
-              error: data.errors?.[0] || "Processing failed",
-            });
-            completed.add(companyIndex);
+          const response = await fetch(`${apiUrl}/company/${company.domain}`);
+          if (response.ok) {
+            const data = await response.json();
+            done.add(company.domain);
+            setCompanies((prev) =>
+              prev.map((c) =>
+                c.domain === company.domain
+                  ? { ...c, status: "completed" as const, fill_rate: data.fill_rate ?? undefined }
+                  : c
+              )
+            );
           }
+          // 404 means still processing — keep polling
         } catch {
-          console.error("Polling error");
+          // Network hiccup — keep polling
         }
       }
     }, 3000);
@@ -266,8 +264,35 @@ export default function BatchProcess({
     companies.length > 0 &&
     companies.filter((c) => c.status !== "error").length > 0;
 
+  const handleProcessBatch = async () => {
+    if (!validateBatch()) return;
+    const validCompanies = companies.filter((c) => c.status !== "error");
+    const found: { company_name: string; domain: string }[] = [];
+    for (const c of validCompanies) {
+      try {
+        const res = await fetch(`${apiUrl}/company/${c.domain.trim()}`);
+        if (res.ok) found.push({ company_name: c.company_name, domain: c.domain });
+      } catch {
+        // proceed if check fails
+      }
+    }
+    if (found.length > 0) {
+      setDuplicates(found);
+      return;
+    }
+    startBatch("run");
+  };
+
   return (
     <div className="animate-fade-in page-container py-8">
+      {duplicates.length > 0 && (
+        <DuplicateDialog
+          duplicates={duplicates}
+          onIncremental={() => { setDuplicates([]); startBatch("incremental"); }}
+          onScratch={() => { setDuplicates([]); startBatch("run"); }}
+          onCancel={() => setDuplicates([])}
+        />
+      )}
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Page Header */}
         <div className="text-center mb-12">
@@ -319,11 +344,11 @@ export default function BatchProcess({
                   borderColor: "var(--border-subtle)",
                   backgroundColor: "rgba(10, 10, 10, 0.5)",
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={(e: MouseEvent<HTMLLabelElement>) => {
                   e.currentTarget.style.borderColor = "var(--brand)";
                   e.currentTarget.style.backgroundColor = "var(--brand-glow)";
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={(e: MouseEvent<HTMLLabelElement>) => {
                   e.currentTarget.style.borderColor = "var(--border-subtle)";
                   e.currentTarget.style.backgroundColor = "rgba(10, 10, 10, 0.5)";
                 }}
@@ -364,10 +389,10 @@ export default function BatchProcess({
                       onClick={addCompany}
                       className="text-sm font-medium transition-colors"
                       style={{ color: "var(--brand-light)" }}
-                      onMouseEnter={(e) => {
+                      onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => {
                         e.currentTarget.style.color = "var(--brand)";
                       }}
-                      onMouseLeave={(e) => {
+                      onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => {
                         e.currentTarget.style.color = "var(--brand-light)";
                       }}
                     >
@@ -538,7 +563,7 @@ export default function BatchProcess({
                   </button>
                   <button
                     type="button"
-                    onClick={processBatch}
+                    onClick={handleProcessBatch}
                     disabled={!canStartProcessing}
                     className="btn-brand flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >

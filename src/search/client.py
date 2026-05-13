@@ -53,7 +53,7 @@ class SearXNGClient:
         self.base_url = (base_url or os.getenv("SEARXNG_URL", "")).rstrip("/")
         if not self.base_url:
             self.base_url = "http://localhost:8888"
-        self._semaphore = asyncio.Semaphore(4)
+        self._semaphore = asyncio.Semaphore(8)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -129,7 +129,7 @@ class SearXNGClient:
     async def parallel_search(
         self,
         queries: list[str],
-        max_results: int = 8,
+        max_results: int = 10,
     ) -> dict[str, list[dict[str, Any]]]:
         """Run multiple search queries concurrently with deduplication."""
         semaphore = asyncio.Semaphore(3)
@@ -202,10 +202,17 @@ class SearXNGClient:
             # Metrics & case studies
             f"{company_name} assets under management AUM tokenized clients deals",
             f"{company_name} case studies notable deals clients institutional",
+            # Specialized sources
+            f"site:crunchbase.com {company_name}",
+            f"site:linkedin.com/company {company_name}",
+            f"site:pitchbook.com {company_name}",
+            f"site:bloomberg.com {company_name} tokenization",
+            f"{company_name} press release announcement funding news 2023 OR 2024 OR 2025",
+            f"{company_name} tokenized assets review analysis report",
             # Site-specific
             f"site:{domain}",
         ]
-        return await self.parallel_search(queries, max_results=8)
+        return await self.parallel_search(queries, max_results=10)
 
     async def gap_search(
         self,
@@ -258,7 +265,7 @@ class SearXNGClient:
                 f"{company_name} detailed company information profile",
                 f"{company_name} tokenization platform all features",
             ]
-            return await self.parallel_search(queries, max_results=8)
+            return await self.parallel_search(queries, max_results=10)
 
         queries = [_QUERY_TEMPLATES[cat] for cat in sorted(matched_categories)]
         return await self.parallel_search(queries, max_results=8)
